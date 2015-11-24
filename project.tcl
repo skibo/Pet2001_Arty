@@ -199,7 +199,8 @@ if {[string equal [get_runs -quiet synth_1] ""]} {
   set_property flow "Vivado Synthesis 2015" [get_runs synth_1]
 }
 set obj [get_runs synth_1]
-set_property "steps.synth_design.tcl.pre" "$origin_dir/Pet2001_Arty.srcs/sources_1/synth_pre.tcl" $obj
+set_property "steps.synth_design.tcl.pre" \
+   "[file normalize "$origin_dir/Pet2001_Arty.srcs/sources_1/synth_pre.tcl"]" $obj
 
 # set the current synth run
 current_run -synthesis [get_runs synth_1]
