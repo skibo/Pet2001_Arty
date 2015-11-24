@@ -2,6 +2,25 @@
 //
 // Pet2001_Arty.v
 //
+//	This is the very top module for Pet2001 in Digilent Arty FPGA
+//      evaluation board.  This version converts UART inputs into PET
+//      keystrokes and outputs composite video.  An adapter plugged into PMOD
+//	connector JA is needed to produce the composite video signal.
+//
+// Interfaces:
+//	BTN - 		Button 0, system reset.
+//	SW[2] -		PET diagnostic switch
+//	SW[1] -		PET turbo mode
+//	SW[0] - 	PET suspend
+//	LED -		PET diagnostic LED.
+//	CVID[1:0] -	PMOD connections JA[9:10], composite video out.
+//			Connect JA9 through 330 ohm resistor to RCA jack
+//			tip and JA10 through 100 ohm resistor to tip and
+//			ground the ring.
+//	UART_TXD_IN -	UART signal FROM USB/UART chip.  Characters received
+//			are turned into PET keystrokes.  9600 baud.
+//
+//
 // Copyright (c) 2015 Thomas Skibo.
 // All rights reserved.
 //
