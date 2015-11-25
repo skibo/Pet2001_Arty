@@ -1,0 +1,19 @@
+
+Pet2001_Arty
+------------
+November, 2015
+
+A Commodore PET in an Artix-7 FPGA.
+
+This is the source code for a Xilinx Vivado project targeting a Digilent
+Arty FPGA evaluation board.
+
+After cloning this repository, start Vivado and go to the TCL console and
+cd to the top directory of the repository.  Then type "source project.tcl".
+Vivado will create a project within the repository.
+
+References:
+
+http://www.thomasskibo.com/projects/pet2001_arty
+http://www.digilent.com/arty
+

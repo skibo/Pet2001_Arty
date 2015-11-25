@@ -3,7 +3,7 @@
 //
 // sim_petkeys.v
 //
-//	Simulate pet2001uart_keys block.
+//      Simulate pet2001uart_keys block.
 //
 
 module testPetKeys;
@@ -23,7 +23,7 @@ module testPetKeys;
         reset = 1'b1;
     end
     
-    always #10.0 clk = ~clk;	// 50Mhz
+    always #10.0 clk = ~clk;    // 50Mhz
 
     // Wait a few clocks, release reset, a few more clocks, strobe '^D'.
     initial begin
@@ -47,12 +47,12 @@ module testPetKeys;
 
     // DUT
     pet2001uart_keys pet2001uart_keys_0(
-		                        .keyrow(keyrow),
-		                        .keyin(keyin),
-		                        .uart_data(uart_data),
-		                        .uart_strobe(uart_strobe),
-		                        .clk(clk),
-		                        .reset(reset)
+                                        .keyrow(keyrow),
+                                        .keyin(keyin),
+                                        .uart_data(uart_data),
+                                        .uart_strobe(uart_strobe),
+                                        .clk(clk),
+                                        .reset(reset)
                               );
     
 endmodule // testPetKeys

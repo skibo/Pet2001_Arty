@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 ///////////////////////////////////////////////////////////////////////////////
-// Engineer:	Thomas Skibo
+// Engineer:    Thomas Skibo
 // 
 // Create Date: Sep 23, 2011
 // Modified:    Jan 24, 2013
@@ -11,9 +11,9 @@
 //
 //      16K RAM for PET using Artix-7 32 kbit RAMs arranged 4x2.
 //
-//   	These RAMs are clocked by the negative edge of clk.  The Xilinx tools
-// 	should not generate an inverter on the clock line here but instead
-//  	change an attribute in the BRAM which controls which edge triggers it.
+//      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
+//      should not generate an inverter on the clock line here but instead
+//      change an attribute in the BRAM which controls which edge triggers it.
 //
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -44,31 +44,31 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module pet2001ram(output [7:0]	data_out,         // cpu interface
-		  input [7:0]   data_in,
-		  input [13:0]  addr,
-		  input         we,
+module pet2001ram(output [7:0]  data_out,         // cpu interface
+                  input [7:0]   data_in,
+                  input [13:0]  addr,
+                  input         we,
 
-		  input         clk
-	  );
+                  input         clk
+          );
 
     // Arrange as 4 32Kx2 RAMs
     genvar x;
     generate
-	for (x=0; x<4; x=x+1) begin:bit
-	    BRAM_SINGLE_MACRO
-	       #(.BRAM_SIZE("36Kb"),
-		 .WRITE_WIDTH(2),
-		 .READ_WIDTH(2)
-		 ) ram (.DI(data_in[x*2+1:x*2]),
-			.DO(data_out[x*2+1:x*2]),
-			.ADDR(addr),
-			.WE(we),
-			.EN(1'b1),
-			.REGCE(1'b0),
-			.RST(1'b0),
-			.CLK(~clk)		// see description
-		);
+        for (x=0; x<4; x=x+1) begin:bit
+            BRAM_SINGLE_MACRO
+               #(.BRAM_SIZE("36Kb"),
+                 .WRITE_WIDTH(2),
+                 .READ_WIDTH(2)
+                 ) ram (.DI(data_in[x*2+1:x*2]),
+                        .DO(data_out[x*2+1:x*2]),
+                        .ADDR(addr),
+                        .WE(we),
+                        .EN(1'b1),
+                        .REGCE(1'b0),
+                        .RST(1'b0),
+                        .CLK(~clk)              // see description
+                );
         end
     endgenerate
     

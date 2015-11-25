@@ -1,21 +1,21 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
 //
-// Engineer:	Thomas Skibo 
+// Engineer:    Thomas Skibo 
 // 
-// Create Date:	Sep 24, 2011
+// Create Date: Sep 24, 2011
 //
 // Module Name: pet2001io
 //
 // Description:
-//	I/O devices for Pet emulator.  Includes two PIAs and a VIA and a
-//	module that converts a PS2 keyboard into a PET keyboard.
+//      I/O devices for Pet emulator.  Includes two PIAs and a VIA and a
+//      module that converts a PS2 keyboard into a PET keyboard.
 //
-//	I/O is mapped into region 0xE800-0xEFFF.
+//      I/O is mapped into region 0xE800-0xEFFF.
 //
-//		0xE810-0xE813		PIA1
-//		0xE820-0xE823		PIA2
-//		0xE840-0xE84F		VIA
+//              0xE810-0xE813           PIA1
+//              0xE820-0xE823           PIA2
+//              0xE840-0xE84F           VIA
 //
 /////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -46,46 +46,46 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module pet2001io(output reg [7:0] data_out, 	// CPU interface
+module pet2001io(output reg [7:0] data_out,     // CPU interface
                  input [7:0]  data_in,
                  input [10:0] addr,
-                 input 	      rdy,
-                 input 	      we,
+                 input        rdy,
+                 input        we,
 
                  output       irq,
 
-		 output [3:0] keyrow, 		// Keyboard
-		 input [7:0]  keyin,
+                 output [3:0] keyrow,           // Keyboard
+                 input [7:0]  keyin,
 
-                 output       video_blank, 	// Video controls
+                 output       video_blank,      // Video controls
                  output       video_gfx,
-                 input 	      video_sync,
+                 input        video_sync,
 
-                 output       cass_motor_n, 	// Cassette #1 interface
+                 output       cass_motor_n,     // Cassette #1 interface
                  output       cass_write,
-                 input 	      cass_sense_n,
-                 input 	      cass_read,
+                 input        cass_sense_n,
+                 input        cass_read,
 
-                 output       audio, 		// CB2 audio
+                 output       audio,            // CB2 audio
 
-                 input 	      diag_l, 		// diag jumper input
+                 input        diag_l,           // diag jumper input
 
-                 input 	      slow_clock, 	// for VIA timers
+                 input        slow_clock,       // for VIA timers
 
-                 input 	      clk,
-                 input 	      reset
-	 );
+                 input        clk,
+                 input        reset
+         );
 
 
     /////////////////////////// 6520 PIA1 ////////////////////////////////////
     //
-    wire	pia1_strobe = rdy && (addr[10:2] == 9'b000_0001_00);
-    wire [7:0] 	pia1_data_out;
-    wire 	pia1_irq;
-    wire [7:0] 	pia1_porta_out;
-    wire [7:0] 	pia1_porta_in = {diag_l, 2'b00, cass_sense_n, 4'b0000};
+    wire        pia1_strobe = rdy && (addr[10:2] == 9'b000_0001_00);
+    wire [7:0]  pia1_data_out;
+    wire        pia1_irq;
+    wire [7:0]  pia1_porta_out;
+    wire [7:0]  pia1_porta_in = {diag_l, 2'b00, cass_sense_n, 4'b0000};
     wire        pia1_ca1_in = !cass_read;
-    wire 	pia1_ca2_out;
+    wire        pia1_ca2_out;
     
     pia6520 pia1(.data_out(pia1_data_out),
                  .data_in(data_in),
@@ -109,16 +109,16 @@ module pet2001io(output reg [7:0] data_out, 	// CPU interface
 
                  .clk(clk),
                  .reset(reset)
-	 );
+         );
     
     assign video_blank = !pia1_ca2_out;
     assign keyrow = pia1_porta_out[3:0];
     
     ////////////////////////// 6520 PIA2 ////////////////////////////////////
     // (does nothing for now)
-    wire	pia2_strobe = rdy && (addr[10:2] == 9'b000_0010_00);
-    wire [7:0] 	pia2_data_out;
-    wire 	pia2_irq;
+    wire        pia2_strobe = rdy && (addr[10:2] == 9'b000_0010_00);
+    wire [7:0]  pia2_data_out;
+    wire        pia2_irq;
    
     pia6520 pia2(.data_out(pia2_data_out),
                  .data_in(data_in),
@@ -142,55 +142,55 @@ module pet2001io(output reg [7:0] data_out, 	// CPU interface
 
                  .clk(clk),
                  .reset(reset)
-	 );
+         );
 
     /////////////////////////// 6522 VIA ////////////////////////////////////
     //
-    wire	via_strobe = rdy && (addr[10:4] == 7'b000_0100);
-    wire [7:0] 	via_data_out;
+    wire        via_strobe = rdy && (addr[10:4] == 7'b000_0100);
+    wire [7:0]  via_data_out;
     wire        via_irq;
-    wire [7:0] 	via_portb_out;
-    wire [7:0] 	via_portb_in = {2'b00, video_sync, 5'b0_0000};
+    wire [7:0]  via_portb_out;
+    wire [7:0]  via_portb_in = {2'b00, video_sync, 5'b0_0000};
 
     via6522 via(.data_out(via_data_out),
-		.data_in(data_in),
-		.addr(addr[3:0]),
-		.strobe(via_strobe),
-		.we(we),
+                .data_in(data_in),
+                .addr(addr[3:0]),
+                .strobe(via_strobe),
+                .we(we),
 
-		.irq(via_irq),
-		.porta_out(),
-		.porta_in(8'h00),
-		.portb_out(via_portb_out),
-		.portb_in(via_portb_in),
+                .irq(via_irq),
+                .porta_out(),
+                .porta_in(8'h00),
+                .portb_out(via_portb_out),
+                .portb_in(via_portb_in),
 
-		.ca1_in(1'b0),
-		.ca2_out(video_gfx),
-		.ca2_in(1'b0),
+                .ca1_in(1'b0),
+                .ca2_out(video_gfx),
+                .ca2_in(1'b0),
 
-		.cb1_out(),
-		.cb1_in(1'b0),
-		.cb2_out(audio),
-		.cb2_in(1'b0),
+                .cb1_out(),
+                .cb1_in(1'b0),
+                .cb2_out(audio),
+                .cb2_in(1'b0),
 
-		.slow_clock(slow_clock),
+                .slow_clock(slow_clock),
 
-		.clk(clk),
-		.reset(reset)
-	);
+                .clk(clk),
+                .reset(reset)
+        );
 
-    assign cass_write =		via_portb_out[3];
+    assign cass_write =         via_portb_out[3];
 
     /////////////// Read data mux /////////////////////////
     // register I/O stuff, therefore RDY must be delayed a cycle!
     //
     always @(posedge clk)
-	casex (addr[10:2])
-            9'b000_0001_00:	data_out <= pia1_data_out;
-            9'b000_0010_00:	data_out <= pia2_data_out;
-            9'b000_0100_xx:	data_out <= via_data_out;
-            default: 		data_out <= 8'hXX;
-	endcase
+        casex (addr[10:2])
+            9'b000_0001_00:     data_out <= pia1_data_out;
+            9'b000_0010_00:     data_out <= pia2_data_out;
+            9'b000_0100_xx:     data_out <= via_data_out;
+            default:            data_out <= 8'hXX;
+        endcase
     
     assign irq = pia1_irq || pia2_irq || via_irq;
 

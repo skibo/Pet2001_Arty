@@ -2,7 +2,7 @@
 //
 // simtop.v
 //
-//	Simulate top module for Pet2001_Arty.
+//      Simulate top module for Pet2001_Arty.
 //
 module testPet2001_Arty;
 

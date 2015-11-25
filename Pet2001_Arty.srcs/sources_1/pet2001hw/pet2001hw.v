@@ -39,15 +39,15 @@
 //////////////////////////////////////////////////////////////////////////////
 
 module pet2001hw(
-		 input [15:0]     addr, // CPU Interface
-	         input [7:0]      data_in,
-	         output reg [7:0] data_out,
-	         input            we,
-	         output           rdy,
-	         output           nmi,
-	         output           irq,
+                 input [15:0]     addr, // CPU Interface
+                 input [7:0]      data_in,
+                 output reg [7:0] data_out,
+                 input            we,
+                 output           rdy,
+                 output           nmi,
+                 output           irq,
 
-                 output [1:0]	  vidout,  // Composite video
+                 output [1:0]     vidout,  // Composite video
 
                  output [3:0]     keyrow, // Keyboard
                  input [7:0]      keyin,
@@ -63,9 +63,9 @@ module pet2001hw(
                  input            clk_stop,
                  input            diag_l,
 
-	         input            clk,
-	         input            reset
-	 );
+                 input            clk,
+                 input            reset
+         );
 
     assign   nmi = 0;    // unused for now
 
@@ -75,8 +75,8 @@ module pet2001hw(
     // Asserting clk_speed will let everything go at full speed.
     // Asserting clk_stop will suspend it.
     ///////////////////////////////////////////////////////////////
-    reg [6:0] 	clkdiv;
-    reg 	slow_clock;
+    reg [6:0]   clkdiv;
+    reg         slow_clock;
     
 `ifdef CLK100MHZ
  `define CLKDIV_VAL 7'd99
@@ -87,30 +87,30 @@ module pet2001hw(
 `endif
     
     always @(posedge clk)
-	if (reset || clkdiv == 7'd0)
-	    clkdiv <= `CLKDIV_VAL;
-	else
-	    clkdiv <= clkdiv - 1'b1;
+        if (reset || clkdiv == 7'd0)
+            clkdiv <= `CLKDIV_VAL;
+        else
+            clkdiv <= clkdiv - 1'b1;
 
     always @(posedge clk)
-	if (reset)
+        if (reset)
             slow_clock <= 1'b0;
-	else
+        else
             slow_clock <= (clk_speed || clkdiv == 7'd1) && !clk_stop;
    
     ///////////////////////////////////////////////////////////////
     // rdy logic: A wait state is needed for video RAM and I/O.  rdy is also
     // held back until slow_clock pulse if clk_speed isn't asserted.
     ///////////////////////////////////////////////////////////////
-    reg 	rdy_r;
-    wire 	needs_cycle = (addr[15:11] == 5'b1110_1);
+    reg         rdy_r;
+    wire        needs_cycle = (addr[15:11] == 5'b1110_1);
 
     assign rdy = rdy_r || (clk_speed && !needs_cycle);
-		 
+                 
     always @(posedge clk)
-	if (reset)
+        if (reset)
             rdy_r <= 0;
-	else
+        else
             rdy_r <= slow_clock && ! rdy;
     
     /////////////////////////////////////////////////////////////
@@ -118,10 +118,10 @@ module pet2001hw(
     // out second port.  This brings total ROM to 16K which is
     // easy to arrange.
     /////////////////////////////////////////////////////////////
-    wire [7:0]	rom_data;
+    wire [7:0]  rom_data;
    
     wire [10:0] charaddr;
-    wire [7:0] 	chardata;
+    wire [7:0]  chardata;
    
     pet2001roms rom( .data(rom_data),
                      .addr(addr[13:0]),
@@ -130,18 +130,18 @@ module pet2001hw(
                      .chardata(chardata),
                     
                      .clk(clk)
-	     );
+             );
       
     //////////////////////////////////////////////////////////////
     // Pet RAM and video RAM.  Video RAM is dual ported.
     //////////////////////////////////////////////////////////////
-    wire [7:0] 	ram_data;
-    wire [7:0] 	vram_data;
-    wire [7:0] 	video_data;
+    wire [7:0]  ram_data;
+    wire [7:0]  vram_data;
+    wire [7:0]  video_data;
     wire [10:0] video_addr;
 
-    wire	ram_we = we && (addr[15:14] == 2'b00);
-    wire	vram_we = we && (addr[15:11] == 5'b1000_0);
+    wire        ram_we = we && (addr[15:14] == 2'b00);
+    wire        vram_we = we && (addr[15:11] == 5'b1000_0);
 
     pet2001ram ram(.data_out(ram_data),
                    .data_in(data_in),
@@ -149,7 +149,7 @@ module pet2001hw(
                    .we(ram_we),
         
                    .clk(clk)
-	   );
+           );
 
     pet2001vidram vidram(.data_out(vram_data),
                          .data_in(data_in),
@@ -160,15 +160,15 @@ module pet2001hw(
                          .video_data(video_data),
         
                          .clk(clk)
-		 );
+                 );
 
    //////////////////////////////////////
    // Video hardware.
    //////////////////////////////////////
-    wire	video_on;	// signal indicating VGA is scanning visible
-    				// rows.  Used to generate tick interrupts.
-    wire 	video_blank;	// blank screen during scrolling
-    wire	video_gfx;	// display graphic characters vs. lower-case
+    wire        video_on;       // signal indicating VGA is scanning visible
+                                // rows.  Used to generate tick interrupts.
+    wire        video_blank;    // blank screen during scrolling
+    wire        video_gfx;      // display graphic characters vs. lower-case
     
     pet2001ntsc vid(.vidout(vidout),
 
@@ -189,8 +189,8 @@ module pet2001hw(
     ////////////////////////////////////////////////////////
     // I/O hardware
     ////////////////////////////////////////////////////////
-    wire [7:0] 	io_read_data;
-    wire 	io_we = we && (addr[15:11] == 5'b1110_1);
+    wire [7:0]  io_read_data;
+    wire        io_we = we && (addr[15:11] == 5'b1110_1);
 
     pet2001io io(.data_out(io_read_data),
                  .data_in(data_in),
@@ -200,9 +200,9 @@ module pet2001hw(
 
                  .irq(irq),
 
-		 .keyrow(keyrow),
-		 .keyin(keyin),
-		 
+                 .keyrow(keyrow),
+                 .keyin(keyin),
+                 
                  .video_sync(video_on),
                  .video_blank(video_blank),
                  .video_gfx(video_gfx),
@@ -214,29 +214,29 @@ module pet2001hw(
                  .cass_read(cass_read),
 
                  .diag_l(diag_l),
-	
+        
                  .slow_clock(slow_clock),
         
                  .clk(clk),
                  .reset(reset)
-	 );
+         );
 
     /////////////////////////////////////
     // Read data mux (to CPU)
     /////////////////////////////////////
     always @(*)
-	casex (addr[15:11])
-            5'b1110_1:           		// E800
-		data_out = io_read_data;
-            5'b11xx_x:           		// C000-FFFF
-		data_out = rom_data;
-            5'b1000_0:				// 8000-87FF
-		data_out = vram_data;
-            5'b00xx_x:				// 0000-3FFF
-		data_out = ram_data;
+        casex (addr[15:11])
+            5'b1110_1:                          // E800
+                data_out = io_read_data;
+            5'b11xx_x:                          // C000-FFFF
+                data_out = rom_data;
+            5'b1000_0:                          // 8000-87FF
+                data_out = vram_data;
+            5'b00xx_x:                          // 0000-3FFF
+                data_out = ram_data;
             default:
-		data_out = 8'h55;
-	endcase
+                data_out = 8'h55;
+        endcase
     
 endmodule // pet2001hw
 

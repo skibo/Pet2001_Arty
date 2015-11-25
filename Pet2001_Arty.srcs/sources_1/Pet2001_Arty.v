@@ -2,23 +2,23 @@
 //
 // Pet2001_Arty.v
 //
-//	This is the very top module for Pet2001 in Digilent Arty FPGA
+//      This is the very top module for Pet2001 in Digilent Arty FPGA
 //      evaluation board.  This version converts UART inputs into PET
 //      keystrokes and outputs composite video.  An adapter plugged into PMOD
-//	connector JA is needed to produce the composite video signal.
+//      connector JA is needed to produce the composite video signal.
 //
 // Interfaces:
-//	BTN - 		Button 0, system reset.
-//	SW[2] -		PET diagnostic switch
-//	SW[1] -		PET turbo mode
-//	SW[0] - 	PET suspend
-//	LED -		PET diagnostic LED.
-//	CVID[1:0] -	PMOD connections JA[9:10], composite video out.
-//			Connect JA9 through 330 ohm resistor to RCA jack
-//			tip and JA10 through 100 ohm resistor to tip and
-//			ground the ring.
-//	UART_TXD_IN -	UART signal FROM USB/UART chip.  Characters received
-//			are turned into PET keystrokes.  9600 baud.
+//      BTN -           Button 0, system reset.
+//      SW[2] -         PET diagnostic switch
+//      SW[1] -         PET turbo mode
+//      SW[0] -         PET suspend
+//      LED -           PET diagnostic LED.
+//      CVID[1:0] -     PMOD connections JA[9:10], composite video out.
+//                      Connect JA9 through 330 ohm resistor to RCA jack
+//                      tip and JA10 through 100 ohm resistor to tip and
+//                      ground the ring.
+//      UART_TXD_IN -   UART signal FROM USB/UART chip.  Characters received
+//                      are turned into PET keystrokes.  9600 baud.
 //
 //
 // Copyright (c) 2015 Thomas Skibo.
@@ -66,41 +66,41 @@ module Pet2001_Arty(
 
     ////////////////////////////// Clock and Reset /////////////////////////
     //
-    wire 		clkin1;
-    wire 		clkout0;
-    wire 		clk;
-    wire 		clkfbout, clkfbin;
-    wire 		mmcm_locked;
-    reg 		reset_p1;
-    reg 		reset;
+    wire                clkin1;
+    wire                clkout0;
+    wire                clk;
+    wire                clkfbout, clkfbin;
+    wire                mmcm_locked;
+    reg                 reset_p1;
+    reg                 reset;
 
     // Input clock buffer.
     IBUFG gclk_inbuf(.I(CLK), .O(clkin1));
 
     MMCME2_BASE #(.CLKIN1_PERIOD(10.0),
-		  .CLKFBOUT_MULT_F(10.0),
-		  .CLKOUT0_DIVIDE_F(20.0)
-		  // .CLKOUT1_DIVIDE(40),	// subsequent divides are decimal
-	  )
+                  .CLKFBOUT_MULT_F(10.0),
+                  .CLKOUT0_DIVIDE_F(20.0)
+                  // .CLKOUT1_DIVIDE(40),       // subsequent divides are decimal
+          )
     mmcm0(.CLKIN1(clkin1),
-	  .CLKFBIN(clkfbin),
-	  .PWRDWN(1'b0),
-	  .RST(1'b0),
-	  .CLKOUT0(clkout0),
-	  .CLKOUT0B(),
-	  .CLKOUT1(),
-	  .CLKOUT1B(),
-	  .CLKOUT2(),
-	  .CLKOUT2B(),
-	  .CLKOUT3(),
-	  .CLKOUT3B(),
-	  .CLKOUT4(),
-	  .CLKOUT5(),
-	  .CLKOUT6(),
-	  .CLKFBOUT(clkfbout),
-	  .CLKFBOUTB(),
-	  .LOCKED(mmcm_locked)
-	);
+          .CLKFBIN(clkfbin),
+          .PWRDWN(1'b0),
+          .RST(1'b0),
+          .CLKOUT0(clkout0),
+          .CLKOUT0B(),
+          .CLKOUT1(),
+          .CLKOUT1B(),
+          .CLKOUT2(),
+          .CLKOUT2B(),
+          .CLKOUT3(),
+          .CLKOUT3B(),
+          .CLKOUT4(),
+          .CLKOUT5(),
+          .CLKOUT6(),
+          .CLKFBOUT(clkfbout),
+          .CLKFBOUTB(),
+          .LOCKED(mmcm_locked)
+        );
 
     // Output clock buffers.
     BUFG clk0_buf (.I(clkout0), .O(clk));
@@ -108,8 +108,8 @@ module Pet2001_Arty(
 
     // Create a synchronized reset.
     always @(posedge clk) begin
-	reset_p1 <= (BTN || ~mmcm_locked);
-	reset <= reset_p1;
+        reset_p1 <= (BTN || ~mmcm_locked);
+        reset <= reset_p1;
     end
 
     /////////////////////////////////////////////////////////////////////
@@ -122,24 +122,24 @@ module Pet2001_Arty(
 
     pet2001_top pet_top(.vidout(CVID),
 
-			.keyrow(keyrow),
-			.keyin(keyin),
-	
-			.cass_motor_n(),
-			.cass_write(),
-			.cass_sense_n(1'b1),
-			.cass_read(1'b1),
+                        .keyrow(keyrow),
+                        .keyin(keyin),
         
-			.audio(),
-
-			.diag_l(diag_l),
+                        .cass_motor_n(),
+                        .cass_write(),
+                        .cass_sense_n(1'b1),
+                        .cass_read(1'b1),
         
-			.clk_speed(clk_speed),
-			.clk_stop(clk_stop),
+                        .audio(),
 
-			.clk(clk),
-			.reset(reset)
-		);
+                        .diag_l(diag_l),
+        
+                        .clk_speed(clk_speed),
+                        .clk_stop(clk_stop),
+
+                        .clk(clk),
+                        .reset(reset)
+                );
 
     assign UART_RXD_OUT = UART_TXD_IN; // echo back serial data
 
