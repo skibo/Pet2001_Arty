@@ -27,8 +27,8 @@ ROMSRCS= \
 	$(SRCDIR)/rtl/roms/kernel1			\
 	$(SRCDIR)/rtl/roms/kernel2
 
-ROMS= 	$(SRCDIR)/rtl/roms/pet2001_rom2.mem		\
-	$(SRCDIR)/rtl/roms/pet2001_rom1.mem
+ROMS= 	$(SRCDIR)/rtl/roms/pet2001_rom2.v		\
+	$(SRCDIR)/rtl/roms/pet2001_rom1.v
 
 ifndef XILINX_VIVADO
 $(error XILINX_VIVADO must be set to point to Xilinx tools)
