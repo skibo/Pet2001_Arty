@@ -1,7 +1,7 @@
 
 Pet2001_Arty
 ------------
-November, 2015  Updated: Jan, 2016
+November, 2015  Updated: Dec, 2016
 
 A Commodore PET in an Artix-7 FPGA.
 
@@ -15,24 +15,18 @@ repository under the directory "Pet2001_Arty".  The project source code
 will remain outside the project in the "src" directory so it can be under
 source control.
 
-Alternatively, you can create the project from a shell prompt by typing
-"make project".
-
 At this point, you should be able to generate the bitstream from within
 Vivado by clicking "Generate Bitstream" under the "Program and Debug" in
-the Project Manager.  You can also generate the bitstream from a shell
-prompt by with "make bitstream".
+the Project Manager.
 
 Once the bitstream is generated, you should be able to use the Hardware
 Manager to open the target and program the device with the bitstream.
-The first time you program the device, you will be prompted for the bitstream
+The first time you program the device, you might be prompted for the bitstream
 file location (XXX I'm not sure why it doesn't automatically know where it
 is).  Look for the bitstream in:
  <path-of-repository>/Pet2001_Arty/Pet2001_Arty.runs/impl_1/Pet2001_Arty.bit
 After the first time programming the device, the Hardware Manager will
 remember this file location.
-
-Alternatively, you can program the Arty from a shell by typing "make program".
 
 Let me know if you have any trouble.
 
