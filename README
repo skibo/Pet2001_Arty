@@ -16,8 +16,8 @@ will remain outside the project in the "src" directory so it can be under
 source control.
 
 At this point, you should be able to generate the bitstream from within
-Vivado by clicking "Generate Bitstream" under the "Program and Debug" in
-the Project Manager.
+Vivado by clicking "Generate Bitstream" under the "Program and Debug" section
+of the Project Manager.
 
 Once the bitstream is generated, you should be able to use the Hardware
 Manager to open the target and program the device with the bitstream.

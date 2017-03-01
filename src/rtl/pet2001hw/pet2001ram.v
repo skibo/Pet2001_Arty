@@ -3,13 +3,13 @@
 // Engineer:    Thomas Skibo
 // 
 // Create Date: Sep 23, 2011
-// Modified:    Jan 24, 2013
+// Modified:    Mar 1, 2017
 // Design Name: 
 // Module Name: pet2001ram
 //
 // Description:
 //
-//      16K RAM for PET using Artix-7 32 kbit RAMs arranged 4x2.
+//      16K RAM for PET.
 //
 //      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
 //      should not generate an inverter on the clock line here but instead
@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2011, 2013 Thomas Skibo.  All rights reserved.
+// Copyright (C) 2011, 2013, 2017 Thomas Skibo.  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -44,33 +44,23 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module pet2001ram(output [7:0]  data_out,         // cpu interface
-                  input [7:0]   data_in,
-                  input [13:0]  addr,
-                  input         we,
+module pet2001ram(
+                  output reg [7 : 0] data_out, // cpu interface
+                  input [7 : 0]      data_in,
+                  input [13 : 0]     addr,
+                  input              we,
 
-                  input         clk
+                  input              clk
           );
 
-    // Arrange as 4 32Kx2 RAMs
-    genvar x;
-    generate
-        for (x=0; x<4; x=x+1) begin:bit
-            BRAM_SINGLE_MACRO
-               #(.BRAM_SIZE("36Kb"),
-                 .WRITE_WIDTH(2),
-                 .READ_WIDTH(2)
-                 ) ram (.DI(data_in[x*2+1:x*2]),
-                        .DO(data_out[x*2+1:x*2]),
-                        .ADDR(addr),
-                        .WE(we),
-                        .EN(1'b1),
-                        .REGCE(1'b0),
-                        .RST(1'b0),
-                        .CLK(~clk)              // see description
-                );
-        end
-    endgenerate
-    
+    reg [7 : 0] ram[16383 : 0];
+
+    always @(negedge clk)
+        if (we)
+            ram[addr] <= data_in;
+
+    always @(negedge clk)
+        data_out <= ram[addr];
+
 endmodule // pet2001ram
 

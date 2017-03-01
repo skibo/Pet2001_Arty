@@ -62,8 +62,6 @@ module Pet2001_Arty(
         );
 
 
-`include "roms/pet2001_rom1.v"
-
     ////////////////////////////// Clock and Reset /////////////////////////
     //
     wire                clkin1;
