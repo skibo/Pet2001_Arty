@@ -18,8 +18,7 @@ SOURCES= \
 	$(SRCDIR)/rtl/pet2001_top.v
 
 ROMSRCS= \
-	$(SRCDIR)/rtl/roms/pet2001.bmm			\
-	$(SRCDIR)/rtl/roms/charrom.mem			\
+	$(SRCDIR)/rtl/roms/charrom			\
 	$(SRCDIR)/rtl/roms/basic1			\
 	$(SRCDIR)/rtl/roms/basic2			\
 	$(SRCDIR)/rtl/roms/edit1g			\
@@ -27,8 +26,8 @@ ROMSRCS= \
 	$(SRCDIR)/rtl/roms/kernel1			\
 	$(SRCDIR)/rtl/roms/kernel2
 
-ROMS= 	$(SRCDIR)/rtl/roms/pet2001_rom2.v		\
-	$(SRCDIR)/rtl/roms/pet2001_rom1.v
+ROMS= 	$(SRCDIR)/rtl/roms/pet2001_rom2.mem		\
+	$(SRCDIR)/rtl/roms/pet2001_rom1.mem
 
 ifndef XILINX_VIVADO
 $(error XILINX_VIVADO must be set to point to Xilinx tools)
