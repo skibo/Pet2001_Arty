@@ -53,6 +53,7 @@ module pet2001ram(
                   input              clk
           );
 
+    (* ram_style = "block" *)
     reg [7 : 0] ram[16383 : 0];
 
     always @(negedge clk)
