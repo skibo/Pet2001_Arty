@@ -114,7 +114,7 @@ set obj [get_projects Pet2001_Arty]
 set_property "board_part" "digilentinc.com:arty:part0:1.1" $obj
 set_property "default_lib" "xil_defaultlib" $obj
 set_property "ip_cache_permissions" "read write" $obj
-set_property "ip_output_repo" "/home/skibo/FPGA/Arty/Pet2001_Arty/Pet2001_Arty/Pet2001_Arty.cache/ip" $obj
+set_property "ip_output_repo" "[file normalize "$origin_dir/Pet2001_Arty/Pet2001_Arty.cache/ip"]" $obj
 set_property "sim.ip.auto_export_scripts" "1" $obj
 set_property "simulator_language" "Mixed" $obj
 set_property "xsim.array_display_limit" "64" $obj
@@ -210,7 +210,6 @@ set_property "transport_int_delay" "0" $obj
 set_property "transport_path_delay" "0" $obj
 set_property "xelab.nosort" "1" $obj
 set_property "xelab.unifast" "" $obj
-set_property "xsim.view" "/home/skibo/FPGA/Arty/Pet2001_Arty/Pet2001_Arty/testPet2001_Arty_behav.wcfg" $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {
@@ -221,7 +220,6 @@ if {[string equal [get_runs -quiet synth_1] ""]} {
 }
 set obj [get_runs synth_1]
 set_property "needs_refresh" "1" $obj
-set_property "steps.synth_design.tcl.pre" "[file normalize "$origin_dir/src/rtl/synth_pre.tcl"]" $obj
 
 # set the current synth run
 current_run -synthesis [get_runs synth_1]

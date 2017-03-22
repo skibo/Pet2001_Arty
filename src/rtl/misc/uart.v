@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
 // Company: 
-// Engineer:	Thomas Skibo 
+// Engineer:    Thomas Skibo 
 // 
 // Create Date: 16:25:10 09/19/2007 
 // Design Name: 
@@ -38,72 +38,72 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module uart(output		serial_out,
-	    input		serial_in,
+module uart(output           serial_out,
+            input            serial_in,
 
-	    output		write_rdy,
-	    input [7:0]		write_data,
-	    input		write_strobe,
+            output           write_rdy,
+            input [7:0]      write_data,
+            input            write_strobe,
 
-	    output reg [7:0]  	read_data,
-	    output reg        	read_strobe,
+            output reg [7:0] read_data,
+            output reg       read_strobe,
 
-	    input             	reset,
-	    input             	clk
-    );
-   
+            input            reset,
+            input            clk
+            );
+    
     parameter [15:0]
-	CLK_DIVIDER = 5208; // 19,200 baud @ 100 Mhz or 9600 @ 50 Mhz
-   
+        CLK_DIVIDER = 5208; // 19,200 baud @ 100 Mhz or 9600 @ 50 Mhz
+    
     ///////////// output //////////////////////////
     //
-    reg [8:0]	out_data;
-    reg [3:0] 	out_bit_cntr;
-    reg [15:0] 	out_clk_div;
-    reg         out_clk_div_zero;
-   
+    reg [8:0]                out_data;
+    reg [3:0]                out_bit_cntr;
+    reg [15:0]               out_clk_div;
+    reg                      out_clk_div_zero;
+    
     always @(posedge clk)
-	if (reset)
+        if (reset)
             out_data <= 9'h1ff;
-	else if (write_strobe)
+        else if (write_strobe)
             out_data <= { write_data, 1'b0 };
-         else if (out_clk_div_zero)
-	     out_data <= { 1'b1, out_data[8:1] };
+        else if (out_clk_div_zero)
+            out_data <= { 1'b1, out_data[8:1] };
 
     // out_clk_div is a clock divider.  It generates a pulse
     // every bit time and advances the shift register.
     //
     always @(posedge clk)
-	if (reset || write_strobe || out_clk_div_zero) begin
+        if (reset || write_strobe || out_clk_div_zero) begin
             out_clk_div <= CLK_DIVIDER-1;
             out_clk_div_zero <= 0;
-	end
-	else begin
+        end
+        else begin
             out_clk_div <= out_clk_div - 1;
             out_clk_div_zero <= (out_clk_div == 16'd1);
-	end
+        end
 
     // out_bit_cntr counts the 10 bits out and controls the write_rdy
     // signal.
     //
     always @(posedge clk)
-	if (reset)
+        if (reset)
             out_bit_cntr <= 4'd10;
-	else if (write_strobe)
+        else if (write_strobe)
             out_bit_cntr <= 4'd0;
-	else if (out_clk_div_zero && out_bit_cntr != 4'd10)
-	    out_bit_cntr <= out_bit_cntr + 1;
+        else if (out_clk_div_zero && out_bit_cntr != 4'd10)
+            out_bit_cntr <= out_bit_cntr + 1;
 
     assign write_rdy = (out_bit_cntr == 4'd10);
     assign serial_out = out_data[0];
-   
+    
     //////////////// Input ////////////////////////////
     //
     reg         serial_in_1;
     reg         serial_in_synced;
-    reg [3:0] 	in_bit_cntr;
-    reg [15:0] 	in_clk_div;
-    reg [15:0] 	in_ones_cntr;
+    reg [3:0]   in_bit_cntr;
+    reg [15:0]  in_clk_div;
+    reg [15:0]  in_ones_cntr;
     reg         in_ones_avg;
     reg         in_clk_tick;
     
@@ -113,53 +113,53 @@ module uart(output		serial_out,
     // synchronize serial_in.
     //
     always @(posedge clk)
-	if (reset) begin
+        if (reset) begin
             serial_in_synced <= 1;
             serial_in_1 <= 1;
-	end
-	else begin
+        end
+        else begin
             serial_in_synced <= serial_in_1;
             serial_in_1 <= serial_in;
-	end
+        end
 
     always @(posedge clk)
-	if (reset || in_err)
+        if (reset || in_err)
             in_bit_cntr <= 4'd9;
-	else if (in_start)
+        else if (in_start)
             in_bit_cntr <= 4'd0;
-	else if (in_bit_cntr != 4'd9 && in_clk_tick)
-	    in_bit_cntr <= in_bit_cntr+1;
+        else if (in_bit_cntr != 4'd9 && in_clk_tick)
+            in_bit_cntr <= in_bit_cntr+1;
     
     assign in_start = (in_bit_cntr == 4'd9 && !serial_in_synced);
     assign in_err = (in_clk_tick && in_bit_cntr == 4'd0 && in_ones_avg);
-   
+    
     always @(posedge clk)
-	if (reset || in_clk_tick || in_start) begin
+        if (reset || in_clk_tick || in_start) begin
             in_clk_div <= CLK_DIVIDER-1;
             in_clk_tick <= 0;
-	end
-	else begin
+        end
+        else begin
             in_clk_div <= in_clk_div - 1;
             in_clk_tick <= (in_clk_div == 16'd1);
-	end
-   
+        end
+    
     always @(posedge clk)
-	if (reset || in_clk_tick || in_start)
+        if (reset || in_clk_tick || in_start)
             in_ones_cntr <= 16'd0;
-	else if (serial_in_synced)
+        else if (serial_in_synced)
             in_ones_cntr <= in_ones_cntr + 1;
-   
+    
     always @(posedge clk)
-	in_ones_avg <= (in_ones_cntr > (CLK_DIVIDER/2));
+        in_ones_avg <= (in_ones_cntr > (CLK_DIVIDER/2));
 
     always @(posedge clk)
-	if (in_clk_tick && in_bit_cntr != 4'd0 && in_bit_cntr != 4'd9)
+        if (in_clk_tick && in_bit_cntr != 4'd0 && in_bit_cntr != 4'd9)
             read_data <= { in_ones_avg, read_data[7:1] };
-   
+    
     always @(posedge clk)
-	if (reset)
+        if (reset)
             read_strobe <= 0;
-	else
+        else
             read_strobe <= (in_bit_cntr == 4'd8 && in_clk_tick);
     
 endmodule // uart

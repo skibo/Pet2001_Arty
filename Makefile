@@ -17,15 +17,6 @@ SOURCES= \
 	$(SRCDIR)/rtl/misc/uart.v			\
 	$(SRCDIR)/rtl/pet2001_top.v
 
-ROMSRCS= \
-	$(SRCDIR)/rtl/roms/charrom			\
-	$(SRCDIR)/rtl/roms/basic1			\
-	$(SRCDIR)/rtl/roms/basic2			\
-	$(SRCDIR)/rtl/roms/edit1g			\
-	$(SRCDIR)/rtl/roms/edit2g			\
-	$(SRCDIR)/rtl/roms/kernel1			\
-	$(SRCDIR)/rtl/roms/kernel2
-
 ROMS= 	$(SRCDIR)/rtl/roms/pet2001_rom2.mem		\
 	$(SRCDIR)/rtl/roms/pet2001_rom1.mem
 
@@ -35,9 +26,9 @@ endif
 
 VIVADO=$(XILINX_VIVADO)/bin/vivado
 
-.PHONY: default project bitstream roms program
+.PHONY: default project bitstream program
 
-default: project roms
+default: project 
 
 PROJECT_FILE=$(PROJNM)/$(PROJNM).xpr
 
@@ -53,11 +44,6 @@ bitstream: $(BITSTREAM)
 $(BITSTREAM): $(SOURCES) $(ROMS) $(PROJECT_FILE)
 	echo Building $(BITSTREAM) from sources
 	$(VIVADO) -mode batch -source bitstream.tcl -tclargs $(PROJNM)
-
-roms: $(ROMS)
-
-$(ROMS): $(ROMSRCS)
-	(cd $(SRCDIR)/rtl/roms ; $(MAKE))
 
 program: $(BITSTREAM)
 	djtgcfg prog -d Arty -i 0 -f $(BITSTREAM)
