@@ -147,12 +147,12 @@ module pet2001hw(
     wire [7:0]  video_data;
     wire [10:0] video_addr;
 
-    wire        ram_we = we && (addr[15:14] == 2'b00);
+    wire        ram_we = we && !addr[15];
     wire        vram_we = we && (addr[15:11] == 5'b1000_0);
 
     pet2001ram ram(.data_out(ram_data),
                    .data_in(data_in),
-                   .addr(addr[13:0]),
+                   .addr(addr[14:0]),
                    .we(ram_we),
         
                    .clk(clk)
@@ -259,7 +259,7 @@ module pet2001hw(
                 data_out = rom_data;
             5'b1000_0:                          // 8000-87FF
                 data_out = vram_data;
-            5'b00xx_x:                          // 0000-3FFF
+            5'b0xxx_x:                          // 0000-7FFF
                 data_out = ram_data;
             default:
                 data_out = 8'h55;

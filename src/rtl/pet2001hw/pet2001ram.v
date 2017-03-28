@@ -9,7 +9,7 @@
 //
 // Description:
 //
-//      16K RAM for PET.
+//      32K RAM for PET.
 //
 //      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
 //      should not generate an inverter on the clock line here but instead
@@ -47,14 +47,14 @@
 module pet2001ram(
                   output reg [7 : 0] data_out, // cpu interface
                   input [7 : 0]      data_in,
-                  input [13 : 0]     addr,
+                  input [14 : 0]     addr,
                   input              we,
 
                   input              clk
           );
 
     (* ram_style = "block" *)
-    reg [7 : 0] ram[16383 : 0];
+    reg [7 : 0] ram[32767 : 0];
 
     always @(negedge clk)
         if (we)
