@@ -13,8 +13,8 @@ module testPet2001_Arty;
     wire	   PET_VID_HORZ_N;
     wire	   PET_VID_VERT_N;
     wire [9:0] KEYROW;
-    pulldown pulls[9:0](KEYROW);
-    reg [7:0]  KEYCOL;
+    wire [7:0] KEYCOL;
+    pulldown pulls[7:0](KEYCOL); // Implemented in constraints.
 `else
     wire [1:0] CVID;
     reg        UART_TXD_IN;
@@ -26,9 +26,7 @@ module testPet2001_Arty;
     initial begin
         SW = 3'b000;
         BTN = 1'b0;
-`ifdef PET_REAL
-        KEYCOL = 8'hff;
-`else
+`ifndef PET_REAL
         UART_TXD_IN = 1'b1;
 `endif
         CLK100 = 1'b0;
