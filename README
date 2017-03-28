@@ -30,6 +30,12 @@ remember this file location.
 
 Let me know if you have any trouble.
 
+A second tcl script called "project2.tcl" generates a project called 
+Pet2001Real_Arty which is a design that can interface to a real Commodore PET's
+video and keyboard (in other words replacing the PET motherboard with
+an FPGA).  I haven't documented this project yet.  It requires some hardware
+to convert outputs to drive 5V TTL video signals.
+
 --Thomas Skibo
 ThomasSkibo@yahoo.com
 
