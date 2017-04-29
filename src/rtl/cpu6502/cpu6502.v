@@ -772,16 +772,17 @@ module cpu6502(output reg [15:0]        addr,
                                 3'b010:  acc_nxt = acc ^ data_in_r;     // EOR
                                 3'b011: begin                           // ADC
                                     if (p[`P_D]) begin:bcd_adc
-                                        reg half_carry;
-                                        reg carry_nxt;
-                                        
-                                        half_carry = ({1'b0,acc[3:0]}+data_in_r[3:0]+p[`P_C] > 5'd9);
-                                        carry_nxt = ({1'b0,acc[7:4]}+data_in_r[7:4]+half_carry > 5'd9);
-                                        
-                                        acc_nxt = {(acc[7:4]+data_in_r[7:4]+half_carry+(carry_nxt?4'd6:4'd0)),
-                                                   (acc[3:0]+data_in_r[3:0]+p[`P_C]+(half_carry?4'd6:4'd0))};
+                                        reg [4:0] nyb_l;
+                                        reg [4:0] nyb_h;
 
-                                        p_nxt[`P_C] = carry_nxt;
+                                        nyb_l = {1'b0, acc[3:0]} + data_in_r[3:0] + p[`P_C];
+                                        if (nyb_l > 5'd9)
+                                            nyb_l = nyb_l + 5'd6;
+                                        nyb_h = {1'b0, acc[7:4]} + data_in_r[7:4] + nyb_l[4];
+                                        if (nyb_h > 5'd9)
+                                            nyb_h = nyb_h + 5'd6;
+                                        acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
+                                        p_nxt[`P_C] = nyb_h[4];
                                     end
                                     else
                                         {p_nxt[`P_C], acc_nxt} = {1'b0, acc} + data_in_r + p[`P_C];
@@ -796,19 +797,24 @@ module cpu6502(output reg [15:0]        addr,
                                     p_nxt[`P_N] = result[7];
                                     p_nxt[`P_Z] = (result == 8'h00);
                                 end
-                                3'b111: begin:sbc_block                 // SBC
-                                    reg borrow;
-                                    reg half_borrow;
-                                    if (p[`P_D]) begin
-                                        half_borrow = ({1'b0,acc[3:0]}-data_in_r[3:0]-(1'b1^p[`P_C]) > 5'd9);
-                                        borrow = ({1'b0,acc[7:4]}-data_in_r[7:4]- half_borrow > 5'd9);
-                                        
-                                        acc_nxt = {(acc[7:4]-data_in_r[7:4]-half_borrow-(borrow?4'd6:4'd0)),
-                                                   (acc[3:0]-data_in_r[3:0]-(1'b1^p[`P_C])-(half_borrow?4'd6:4'd0))};
-                                        p_nxt[`P_C] = ~borrow;
+                                3'b111: begin                 			// SBC
+                                    if (p[`P_D]) begin:bcd_sbc
+                                        reg [4:0] nyb_l;
+                                        reg [4:0] nyb_h;
+
+                                        nyb_l = {1'b0, acc[3:0]} - data_in_r[3:0] - !p[`P_C];
+                                        if (nyb_l[4])
+                                            nyb_l = nyb_l - 5'd6;
+                                        nyb_h = {1'b0, acc[7:4]} - data_in_r[7:4] - nyb_l[4];
+                                        if (nyb_h[4])
+                                            nyb_h = nyb_h - 5'd6;
+
+                                        acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
+                                        p_nxt[`P_C] = ~nyb_h[4];
                                     end
-                                    else begin
-                                        {borrow, acc_nxt} = ({1'b0, acc} - data_in_r - (1'b1^p[`P_C]));
+                                    else begin:sbc
+                                        reg borrow;
+                                        {borrow, acc_nxt} = {1'b0, acc} - data_in_r - !p[`P_C];
                                         p_nxt[`P_C] = ~borrow;
                                     end
                                     p_nxt[`P_V] = (acc[7] != data_in_r[7]) && (acc[7] != acc_nxt[7]);
