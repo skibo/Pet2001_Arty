@@ -192,6 +192,7 @@ set obj [get_filesets sim_1]
 set files [list \
  "[file normalize "$origin_dir/src/sim/simtop.v"]"\
  "[file normalize "$origin_dir/src/sim/sim_petkeys.v"]"\
+ "[file normalize "$origin_dir/src/sim/petvid.v"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
