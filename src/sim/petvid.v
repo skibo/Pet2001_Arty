@@ -2,12 +2,21 @@
 //
 // petvid.v
 //
-//	Incomplete and crude simulation of Commodore PET video logic.
+//	Incomplete and crude simulation of Commodore PET video logic.  I hastily
+//  coded these models for 7400-series TTL chips and so they should not be
+//  relied upon as acurate!
+//
+//  This simulation is derived from the PET schematic found at:
+// ftp://www.zimmers.net/pub/cbm/firmware/computers/pet/schematics/2001/320008-3.gif
+//
+//  Except for the major signals (like vert_drive and horz_drive), the node
+//  names correspond to the chip name on the schematic and the pin number
+//  that drives the node.
 //
 ////////////////
 
 //
-// Copyright (c) 2015 Thomas Skibo.
+// Copyright (c) 2015 Thomas Skibo. <thomas@skibo.net>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
