@@ -43,6 +43,8 @@
 #    "../src/constrs/Pet2001Real_Arty.xdc"
 #    "../src/sim/simtop.v"
 #    "../src/sim/sim_petkeys.v"
+#    "../src/sim/petvid.v"
+#    "../src/sim/charrom.mem"
 #
 #*****************************************************************************************
 
@@ -193,6 +195,7 @@ set files [list \
  "[file normalize "$origin_dir/src/sim/simtop.v"]"\
  "[file normalize "$origin_dir/src/sim/sim_petkeys.v"]"\
  "[file normalize "$origin_dir/src/sim/petvid.v"]"\
+ "[file normalize "$origin_dir/src/sim/charrom.mem"]"\
 ]
 add_files -norecurse -fileset $obj $files
 
