@@ -152,13 +152,13 @@ module pet2001uart_keys(input [3:0]  keyrow,
             endcase // case (c)
         end
     endfunction // ascii_lookup
-    
+
     wire [7:0]  ascii_rowcol = ascii_lookup(uart_data);
     always @(posedge clk) begin
         ascii_row <= ascii_rowcol[7:4];
         ascii_col <= ascii_rowcol[3:0];
     end
-    
+
     // Only one key at a time is pressed.  When a UART strobe comes in,
     // the key's row and column (on a PET) is latched and released after
     // a 10ms timeout.
@@ -200,5 +200,5 @@ module pet2001uart_keys(input [3:0]  keyrow,
 
     // Generate keyin
     assign keyin = ~(keyrow == pressed_row ? (8'd1 << pressed_col) : 8'h00);
-    
+
 endmodule // pet2001uart_keys

@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
 //
-// Engineer:    Thomas Skibo 
-// 
+// Engineer:    Thomas Skibo
+//
 // Create Date: Sep 24, 2011
 //
 // Module Name: pet2001io
@@ -21,7 +21,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2011, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -31,7 +31,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -86,7 +86,7 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
     wire [7:0]  pia1_porta_in = {diag_l, 2'b00, cass_sense_n, 4'b0000};
     wire        pia1_ca1_in = !cass_read;
     wire        pia1_ca2_out;
-    
+
     pia6520 pia1(.data_out(pia1_data_out),
                  .data_in(data_in),
                  .addr(addr[1:0]),
@@ -110,16 +110,16 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
                  .clk(clk),
                  .reset(reset)
          );
-    
+
     assign video_blank = !pia1_ca2_out;
     assign keyrow = pia1_porta_out[3:0];
-    
+
     ////////////////////////// 6520 PIA2 ////////////////////////////////////
     // (does nothing for now)
     wire        pia2_strobe = rdy && (addr[10:2] == 9'b000_0010_00);
     wire [7:0]  pia2_data_out;
     wire        pia2_irq;
-   
+
     pia6520 pia2(.data_out(pia2_data_out),
                  .data_in(data_in),
                  .addr(addr[1:0]),
@@ -191,7 +191,7 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
             9'b000_0100_xx:     data_out <= via_data_out;
             default:            data_out <= 8'hXX;
         endcase
-    
+
     assign irq = pia1_irq || pia2_irq || via_irq;
 
 endmodule // pet2001io

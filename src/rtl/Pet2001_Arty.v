@@ -49,15 +49,15 @@
 
 
 module Pet2001_Arty(
-            input [2:0]  SW, 
+            input [2:0]  SW,
             input        BTN,
             output reg   LED,
-            
+
             output [1:0] CVID,
-            
+
             input        UART_TXD_IN,
             output       UART_RXD_OUT,
-            
+
             input        CLK
         );
 
@@ -122,16 +122,16 @@ module Pet2001_Arty(
 
                         .keyrow(keyrow),
                         .keyin(keyin),
-        
+
                         .cass_motor_n(),
                         .cass_write(),
                         .cass_sense_n(1'b1),
                         .cass_read(1'b1),
-        
+
                         .audio(),
 
                         .diag_l(diag_l),
-        
+
                         .clk_speed(clk_speed),
                         .clk_stop(clk_stop),
 
@@ -160,7 +160,7 @@ module Pet2001_Arty(
 
     pet2001uart_keys petkeys(.keyrow(keyrow),
                              .keyin(keyin),
-                             
+
                              .uart_data(uart_data),
                              .uart_strobe(uart_strobe),
 
@@ -170,5 +170,5 @@ module Pet2001_Arty(
 
     always @(posedge clk)
         LED <= (keyrow == 4'd11); // diag LED
-    
+
 endmodule // Pet2001_Arty

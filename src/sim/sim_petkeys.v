@@ -22,7 +22,7 @@ module testPetKeys;
         clk = 1'b0;
         reset = 1'b1;
     end
-    
+
     always #10.0 clk = ~clk;    // 50Mhz
 
     // Wait a few clocks, release reset, a few more clocks, strobe '^D'.
@@ -54,5 +54,5 @@ module testPetKeys;
                                         .clk(clk),
                                         .reset(reset)
                               );
-    
+
 endmodule // testPetKeys

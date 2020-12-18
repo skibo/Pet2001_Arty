@@ -9,9 +9,9 @@ module testPet2001_Arty;
     reg [2:0]  SW;
     reg        BTN;
 `ifdef PET_REAL
-    wire	   PET_VID_DATA_N;
-    wire	   PET_VID_HORZ_N;
-    wire	   PET_VID_VERT_N;
+    wire       PET_VID_DATA_N;
+    wire       PET_VID_HORZ_N;
+    wire       PET_VID_VERT_N;
     wire [9:0] KEYROW;
     wire [7:0] KEYCOL;
     pulldown pulls[7:0](KEYCOL); // Implemented in constraints.
@@ -56,5 +56,5 @@ module testPet2001_Arty;
                      .CLK(CLK100)
                   );
 `endif
-    
+
 endmodule // testPet2001_Arty

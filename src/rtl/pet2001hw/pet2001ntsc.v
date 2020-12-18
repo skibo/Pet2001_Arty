@@ -2,7 +2,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 // Engineer:    Thomas Skibo
-// 
+//
 // Create Date: Nov 11, 2011
 //
 // Module Name: pet2001ntsc
@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2011, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -27,7 +27,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -57,17 +57,17 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
                    input             reset,
                    input             clk
            );
-   
+
     /////////////// vert and horiz counters //////////////////////////////
     //
     reg [9:0]   h_counter;
     reg [8:0]   v_counter;
     wire        next_line;
     wire        next_screen;
-    
+
     reg [2:0]   clk_div_cnt;
     wire        clk_div;
-   
+
     // Divide clk by 5.  (assumes 50 Mhz clock)
     always @(posedge clk)
         if (reset || clk_div)
@@ -76,25 +76,25 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
             clk_div_cnt <= clk_div_cnt - 1'b1;
 
     assign clk_div = (clk_div_cnt == 3'd0);
-   
+
     always @(posedge clk)
         if (reset || next_line)
             h_counter <= 10'd0;
         else if (clk_div)
             h_counter <= h_counter + 1'b1;
-         
+
     assign next_line = (h_counter == 10'd634) && clk_div;
-   
-   
+
+
     always @(posedge clk)
         if (reset || next_screen)
             v_counter <= 9'd0;
         else if (next_line)
             v_counter <= v_counter + 1'b1;
-         
+
     assign next_screen = (v_counter == 9'd261) && next_line;
 
-   
+
     ////////// Pet 320x200 display within 515x262 video
     //
     reg [2:0]   pixel_xbit;             // 0-7: video bit within byte
@@ -171,7 +171,7 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
             else
                 chardata_r <= { chardata_r[6:0], 1'b0 };
         end
-    
+
     //////////////////////////////// Video Logic ////////////////////////////
     //
     wire pixel = chardata_r[7] & ~video_blank;
@@ -186,4 +186,3 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
                         ~(vert_sync ^ sync_pulse) };
 
 endmodule // pet2001ntsc
-

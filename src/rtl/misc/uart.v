@@ -1,11 +1,11 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer:    Thomas Skibo 
-// 
-// Create Date: 16:25:10 09/19/2007 
-// Design Name: 
-// Module Name: uart 
+// Company:
+// Engineer:    Thomas Skibo
+//
+// Create Date: 16:25:10 09/19/2007
+// Design Name:
+// Module Name: uart
 //
 //    Implements a simple no parity, 8-bit serial interface.
 //
@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2007, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -23,7 +23,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -51,17 +51,17 @@ module uart(output           serial_out,
             input            reset,
             input            clk
             );
-    
+
     parameter [15:0]
         CLK_DIVIDER = 5208; // 19,200 baud @ 100 Mhz or 9600 @ 50 Mhz
-    
+
     ///////////// output //////////////////////////
     //
     reg [8:0]                out_data;
     reg [3:0]                out_bit_cntr;
     reg [15:0]               out_clk_div;
     reg                      out_clk_div_zero;
-    
+
     always @(posedge clk)
         if (reset)
             out_data <= 9'h1ff;
@@ -96,7 +96,7 @@ module uart(output           serial_out,
 
     assign write_rdy = (out_bit_cntr == 4'd10);
     assign serial_out = out_data[0];
-    
+
     //////////////// Input ////////////////////////////
     //
     reg         serial_in_1;
@@ -106,7 +106,7 @@ module uart(output           serial_out,
     reg [15:0]  in_ones_cntr;
     reg         in_ones_avg;
     reg         in_clk_tick;
-    
+
     wire        in_start;
     wire        in_err;
 
@@ -129,10 +129,10 @@ module uart(output           serial_out,
             in_bit_cntr <= 4'd0;
         else if (in_bit_cntr != 4'd9 && in_clk_tick)
             in_bit_cntr <= in_bit_cntr+1;
-    
+
     assign in_start = (in_bit_cntr == 4'd9 && !serial_in_synced);
     assign in_err = (in_clk_tick && in_bit_cntr == 4'd0 && in_ones_avg);
-    
+
     always @(posedge clk)
         if (reset || in_clk_tick || in_start) begin
             in_clk_div <= CLK_DIVIDER-1;
@@ -142,24 +142,24 @@ module uart(output           serial_out,
             in_clk_div <= in_clk_div - 1;
             in_clk_tick <= (in_clk_div == 16'd1);
         end
-    
+
     always @(posedge clk)
         if (reset || in_clk_tick || in_start)
             in_ones_cntr <= 16'd0;
         else if (serial_in_synced)
             in_ones_cntr <= in_ones_cntr + 1;
-    
+
     always @(posedge clk)
         in_ones_avg <= (in_ones_cntr > (CLK_DIVIDER/2));
 
     always @(posedge clk)
         if (in_clk_tick && in_bit_cntr != 4'd0 && in_bit_cntr != 4'd9)
             read_data <= { in_ones_avg, read_data[7:1] };
-    
+
     always @(posedge clk)
         if (reset)
             read_strobe <= 0;
         else
             read_strobe <= (in_bit_cntr == 4'd8 && in_clk_tick);
-    
+
 endmodule // uart

@@ -62,17 +62,17 @@
 //
 
 module Pet2001Real_Arty(
-            input [2:0]  SW, 
+            input [2:0]  SW,
             input        BTN,
             output reg   LED,
-            
+
             output       PET_VID_DATA_N,
             output       PET_VID_HORZ_N,
             output       PET_VID_VERT_N,
 
             output [9:0] KEYROW,
             input [7:0]  KEYCOL,
-            
+
             input        CLK
         );
 
@@ -132,23 +132,23 @@ module Pet2001Real_Arty(
     wire clk_stop = SW[0];
     wire [3:0] keyrowsel;
     wire [7:0] keycol_n = ~KEYCOL; // See note at top on logic reversal.
-    
+
     pet2001_top pet_top(.petvid_data_n(PET_VID_DATA_N),
                         .petvid_horz_n(PET_VID_HORZ_N),
                         .petvid_vert_n(PET_VID_VERT_N),
 
                         .keyrow(keyrowsel),
                         .keyin(keycol_n),
-        
+
                         .cass_motor_n(),
                         .cass_write(),
                         .cass_sense_n(1'b1),
                         .cass_read(1'b1),
-        
+
                         .audio(),
 
                         .diag_l(diag_l),
-        
+
                         .clk_speed(clk_speed),
                         .clk_stop(clk_stop),
 
@@ -164,9 +164,8 @@ module Pet2001Real_Arty(
             OBUFT kr(.I(1'b1), .T(keyrowsel != i), .O(KEYROW[i]));
         end
     endgenerate
-    
+
     always @(posedge clk)
         LED <= (keyrowsel == 4'd11); // diag LED
 
 endmodule // Pet2001Real_Arty
-

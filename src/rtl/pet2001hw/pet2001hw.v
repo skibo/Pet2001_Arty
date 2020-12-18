@@ -2,7 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Engineer:         Thomas Skibo
-// 
+//
 // Create Date:      Sep 23, 2011
 //
 // Module Name:      pet2001hw
@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2011, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -23,7 +23,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -92,7 +92,7 @@ module pet2001hw(
 `else
  `define CLKDIV_VAL 7'd49
 `endif
-    
+
     always @(posedge clk)
         if (reset || clkdiv == 7'd0)
             clkdiv <= `CLKDIV_VAL;
@@ -104,7 +104,7 @@ module pet2001hw(
             slow_clock <= 1'b0;
         else
             slow_clock <= (clk_speed || clkdiv == 7'd1) && !clk_stop;
-   
+
     ///////////////////////////////////////////////////////////////
     // rdy logic: A wait state is needed for video RAM and I/O.  rdy is also
     // held back until slow_clock pulse if clk_speed isn't asserted.
@@ -113,32 +113,32 @@ module pet2001hw(
     wire        needs_cycle = (addr[15:11] == 5'b1110_1);
 
     assign rdy = rdy_r || (clk_speed && !needs_cycle);
-                 
+
     always @(posedge clk)
         if (reset)
             rdy_r <= 0;
         else
             rdy_r <= slow_clock && ! rdy;
-    
+
     /////////////////////////////////////////////////////////////
     // Pet ROMS incuding character ROM.  Character data is read
     // out second port.  This brings total ROM to 16K which is
     // easy to arrange.
     /////////////////////////////////////////////////////////////
     wire [7:0]  rom_data;
-   
+
     wire [10:0] charaddr;
     wire [7:0]  chardata;
-   
+
     pet2001roms rom( .data(rom_data),
                      .addr(addr[13:0]),
-                    
+
                      .charaddr(charaddr),
                      .chardata(chardata),
-                    
+
                      .clk(clk)
              );
-      
+
     //////////////////////////////////////////////////////////////
     // Pet RAM and video RAM.  Video RAM is dual ported.
     //////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ module pet2001hw(
                    .data_in(data_in),
                    .addr(addr[14:0]),
                    .we(ram_we),
-        
+
                    .clk(clk)
            );
 
@@ -162,10 +162,10 @@ module pet2001hw(
                          .data_in(data_in),
                          .cpu_addr(addr[10:0]),
                          .we(vram_we),
-        
+
                          .video_addr(video_addr),
                          .video_data(video_data),
-        
+
                          .clk(clk)
                  );
 
@@ -212,7 +212,7 @@ module pet2001hw(
                     .reset(reset)
             );
 `endif
-    
+
     ////////////////////////////////////////////////////////
     // I/O hardware
     ////////////////////////////////////////////////////////
@@ -229,7 +229,7 @@ module pet2001hw(
 
                  .keyrow(keyrow),
                  .keyin(keyin),
-                 
+
                  .video_sync(video_on),
                  .video_blank(video_blank),
                  .video_gfx(video_gfx),
@@ -241,9 +241,9 @@ module pet2001hw(
                  .cass_read(cass_read),
 
                  .diag_l(diag_l),
-        
+
                  .slow_clock(slow_clock),
-        
+
                  .clk(clk),
                  .reset(reset)
          );
@@ -264,6 +264,5 @@ module pet2001hw(
             default:
                 data_out = 8'h55;
         endcase
-    
-endmodule // pet2001hw
 
+endmodule // pet2001hw

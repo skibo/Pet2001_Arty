@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
 //
-// Engineer:    Thomas Skibo 
-// 
+// Engineer:    Thomas Skibo
+//
 // Create Date: Sep 24, 2011
 //
 // Module Name: pia6520
@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2011, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -27,7 +27,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
                input            we,
 
                output           irq,
-               
+
                output reg [7:0] porta_out,
                input [7:0]      porta_in,
                output reg [7:0] portb_out,
@@ -70,7 +70,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
     reg [5:0]   cra;
     reg         irqa1;
     reg         irqa2;
-    
+
     reg [7:0]   ddrb;
     reg [5:0]   crb;
     reg         irqb1;
@@ -162,7 +162,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
         else if (ca2_act_trans && !cra[5])
             irqa2 <= 1'b1;
 
-   
+
     ////////////////////////////////////////////////////////
     // IRQB logic
 
@@ -194,7 +194,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
         else if (cb2_act_trans && !crb[5])
             irqb2 <= 1'b1;
 
-    
+
     // IRQ and enable logic.
     assign irq = (irqa1 && cra[0]) || (irqa2 && cra[3]) ||
                  (irqb1 && crb[0]) || (irqb2 && crb[3]);
@@ -223,7 +223,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
             3'b111:     cb2_out <= 1'b1;
             default:    cb2_out <= 1'b0;
         endcase
-   
+
     ///////////////////////////////////////////////////
     // Read data mux
     wire [7:0] porta = (porta_out & ddra) | (porta_in & ~ddra);

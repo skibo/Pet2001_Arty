@@ -56,7 +56,7 @@ module jk(output reg q,
 
     always @(negedge c_)
         q <= 1'b0;
-    
+
     always @(negedge clk)
         if (c_)
             case ({j,k})
@@ -97,7 +97,7 @@ module c7493(output reg qa, // pin 12
     always @(negedge ckb)
         if (!r01 || !r02)
             {qd, qc, qb} <= {qd, qc, qb} + 1'b1;
-    
+
 endmodule // c7493
 
 // 74100 latches
@@ -138,7 +138,7 @@ module l74100(output reg q1,
     always @(*)
         if (g2)
             {q8, q7, q6, q5} <= {d8, d7, d6, d5};
-    
+
 endmodule // l74100
 
 // 74177 presettable decade and binary counters/latches
@@ -173,11 +173,11 @@ module c74177(output reg qa,    // pin 5
     always @(negedge clk1)
         if (load_ && clr_)
             qa <= ~qa;
-    
+
     always @(negedge clk2)
         if (load_ && clr_)
             {qd, qc, qb} <= {qd, qc, qb} + 1'b1;
-    
+
 endmodule // c74177
 
 // Half a 7474 D-type flip flop
@@ -187,7 +187,7 @@ module h7474(output reg q,
              input pre_,
              input clr_,
              input clk);
-    
+
     always @(negedge pre_ or negedge clr_ or posedge clk)
         if (!pre_ && !clr_)
             q <= 1'bX;
@@ -212,7 +212,7 @@ module c6540(output reg [7:0]   D,
 
     always @(posedge clk)
         D <= mem[A];
-    
+
 endmodule // c6540
 
 // 74157 quad 2-line to 1-line data selectors/multiplexors.
@@ -223,7 +223,7 @@ module c74157(output [3:0] Y,
               input       G_);
 
     assign Y = (A & {4{!S && !G_}}) | (B & {4{S && !G_}});
-    
+
 endmodule // c74157
 
 // 74165 8-bit shift register.
@@ -246,7 +246,7 @@ module c74165(output      q,
 
     assign q = sr[7];
     assign q_ = ~sr[7];
-    
+
 endmodule // c74165
 
 // Half a 74LS244 octal 3-state buffer
@@ -261,7 +261,7 @@ module c6550s(output [7:0] DB,
               input [9:0]  A,
               input        RW,
               input        clk);
-    
+
     reg [7:0]   mem[1023:0];
     integer     i;
     initial
@@ -273,7 +273,7 @@ module c6550s(output [7:0] DB,
             mem[A] <= DB;
 
     assign DB = RW ? mem[A] : 8'hZZ;
-    
+
 endmodule // c6550s
 
 // Top module.
@@ -314,38 +314,38 @@ module petvid;
 
     wire        c8_2, c8_3;
     wire        d8_8 = !(e2_6 && c8_3); // NAND at D8
-    
+
     wire        c8_5, c8_6;
-    
+
     wire        c7_2, c7_3;
 
     wire        b6_2, b6_3, b6_5, b6_6;
     wire        tp3_4 = 1'b1;
-    
+
     wire        b5_8, b5_9, b5_11, b5_12;
-    
+
     wire        c5_2;
     wire        dis_on, dis_off;
     wire        tp3_1 = 1'b1;
 
-    wire        c7_5, c7_6;    
+    wire        c7_5, c7_6;
     wire        c6_6 = b5_8 && c7_5; // AND at C6
     wire        c6_3 = b5_11 && c7_6; // AND at C6
-    
+
     wire        d5_3, d5_5;
     wire        d6_5, d6_9, d6_2, d6_12;
     wire        d7_5, d7_9, d7_2, d7_12;
     wire        d8_3, d8_6;
-    
+
     wire        c6_11 = dis_off && d8_6; // AND at C6
-    
+
     wire        e6_5, e6_4, e6_19, e6_20;
     wire        e6_8, e6_9, e6_18, e6_17;
     wire        e8_6, e8_8;
 
     wire        a1_9, a1_8, a1_11;
     wire        b1_8 = !(a1_9 && a1_8 && a1_11 && dis_on);  // NAND B1
-    
+
     wire        c2_8 = !(c7_2 && b1_8); // NAND
 
     wire        c2_11 = !(selb && rnw_ne); // NAND
@@ -361,7 +361,7 @@ module petvid;
     wire        c2_3 = !(b2_9 && c1_9);     // NAND
     wire        c2_6 = !(b2_7 && c1_8);     // NAND
     wire        e2_3 = !(c2_6 && c2_3);     // OR with inverted inputs
-        
+
     wire        vert_drive = !(b6_6 && b6_2); // NAND at D8_11
     wire        horz_drive = c5_2;
     wire        video_on = b6_5 && b6_3; // AND at C6_8
@@ -516,7 +516,7 @@ module petvid;
               .B({BA[1:0], 2'b11}),
               .S(selb),
               .G_(1'b0));
-    
+
     c74157 d3(.Y(SA[5:2]),
               .A({d6_12, d6_2, d6_9, d6_5}),
               .B(BA[5:2]),
@@ -533,15 +533,15 @@ module petvid;
     h74244 b3_a(.Y(SD[3:0]),
                 .A(BD[3:0]),
                 .G_(c2_11));
-    
+
     h74244 b3_b(.Y(BD[3:0]),
                 .A(SD[3:0]),
                 .G_(d2_7));
-    
+
     h74244 b4_a(.Y(SD[7:4]),
                 .A(BD[7:4]),
                 .G_(c2_11));
-    
+
     h74244 b4_b(.Y(BD[7:4]),
                 .A(SD[7:4]),
                 .G_(d2_7));
@@ -552,7 +552,7 @@ module petvid;
                .pre_(1'b1),
                .clr_(1'b1),
                .clk(c8_5));
-    
+
     h7474 c1_b(.q(c1_9),
                .q_(c1_8),
                .d(c1_5),
@@ -578,7 +578,7 @@ module petvid;
     c6540 a2(.D(charromd),
              .A({graphic, SD[6:0], a1_11, a1_8, a1_9}),
              .clk(c8_5));
-    
+
     // Logic at very bottom of page.
     assign        e8_6 = !(e6_8 && e6_9 && e6_18 && e6_17);
     assign        e8_8 = !(d7_5 && a1_11 && !video_on);
@@ -599,5 +599,5 @@ module petvid;
         $display("[%t] MONITOR: vert_drive=%b horz_drive=%b video_drive=%b",
                  $time, vert_drive, horz_drive, video_drive);
 `endif
-    
+
 endmodule // top

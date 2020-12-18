@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
-// Company: 
+// Company:
 // Engineer:       Thomas Skibo
-// 
-// Create Date:    22:28:56 08/21/2007 
+//
+// Create Date:    22:28:56 08/21/2007
 // Modified:       Thu Dec 15 12:21:26 PST 2011
 //
-// Module Name:    cpu6502 
+// Module Name:    cpu6502
 // Description:
 //
 //      Yet another 6502 implementation.  This is NOT a cycle accurate
@@ -16,7 +16,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2007-2011, Thomas Skibo.  All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // * Redistributions of source code must retain the above copyright
@@ -26,7 +26,7 @@
 //   documentation and/or other materials provided with the distribution.
 // * The names of contributors may not be used to endorse or promote products
 //   derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -72,14 +72,14 @@ module cpu6502(output reg [15:0]        addr,
 `define P_I    2
 `define P_Z    1
 `define P_C    0
-    
+
     reg [7:0]           instr;          // current instruction
     reg [7:0]           data_in_r;
     reg [7:0]           opaddr_l;
     reg [7:0]           opaddr_h;
     reg                 nmi_r;
     reg                 irq_r;
-    
+
     // register these inputs
     always @(posedge clk)
         if (reset) begin
@@ -94,7 +94,7 @@ module cpu6502(output reg [15:0]        addr,
     always @(posedge clk)
         if (rdy)
             data_in_r <= data_in;
-    
+
     /////////////////
     // NMI Logic
     /////////////////
@@ -112,11 +112,11 @@ module cpu6502(output reg [15:0]        addr,
             do_nmi <= 0;
         else if (nmi_r && !nmi_r_1)
             do_nmi <= 1;
-    
+
    ///////////////////////////////////////////////////////////////////////////
    // Instruction Decode Logic
    //////////////////////////////////////////////////////////////////////////
-      
+
     parameter [4:0]     INSTR_TYPE_ALU =         0,
                         INSTR_TYPE_STA =         1,
                         INSTR_TYPE_BRANCH =      2,
@@ -149,13 +149,13 @@ module cpu6502(output reg [15:0]        addr,
             casex (instr)
                 8'b0000_0000:   instr_type_func = INSTR_TYPE_BRK;
                 8'b1110_1010:   instr_type_func = INSTR_TYPE_NOP;
-                
+
                 8'b????_??01:                   // ALU/STA instr
                     if (instr[7:5] == 3'b100)
                         instr_type_func = INSTR_TYPE_STA;
                     else
-                        instr_type_func = INSTR_TYPE_ALU;            
-                
+                        instr_type_func = INSTR_TYPE_ALU;
+
                 8'b???1_0000:   instr_type_func = INSTR_TYPE_BRANCH;
                 8'b1001_1000:   instr_type_func = INSTR_TYPE_TYA;
                 8'b1010_1000:   instr_type_func = INSTR_TYPE_TAY;
@@ -165,30 +165,30 @@ module cpu6502(output reg [15:0]        addr,
                 8'b1000_1000:   instr_type_func = INSTR_TYPE_DEY;
                 8'b1000_1010:   instr_type_func = INSTR_TYPE_TXA;
                 8'b1001_1010:   instr_type_func = INSTR_TYPE_TXS;
-                
-                8'b11?0_1000:   instr_type_func = INSTR_TYPE_INCXY;         
+
+                8'b11?0_1000:   instr_type_func = INSTR_TYPE_INCXY;
 
                 8'b???1_1000:   instr_type_func = INSTR_TYPE_SCFLAGS;
-                
+
                 8'b0??0_1000:   instr_type_func = INSTR_TYPE_PSHPUL;
-                
+
                 8'b0010_?100:   instr_type_func = INSTR_TYPE_BIT;
-                
+
                 8'b01?0_0000:   instr_type_func = INSTR_TYPE_RTSI;
-                
+
                 8'b0010_0000:   instr_type_func = INSTR_TYPE_JSR;
-                
+
                 8'b01?0_1100:   instr_type_func = INSTR_TYPE_JMP;
 
-                // ASL/LSR/ROL/ROR (shift ops)          
-                8'b0???_??10:   instr_type_func = INSTR_TYPE_SHIFT;     
-                
+                // ASL/LSR/ROL/ROR (shift ops)
+                8'b0???_??10:   instr_type_func = INSTR_TYPE_SHIFT;
+
                 8'b101?_???0:   instr_type_func = INSTR_TYPE_LDXY;
-                
+
                 8'b100?_?1?0:   instr_type_func = INSTR_TYPE_STXY;
-                
+
                 8'b11?0_??00:   instr_type_func = INSTR_TYPE_CMPXY;
-                
+
                 8'b11??_?110:   instr_type_func = INSTR_TYPE_INCDEC;
 `ifdef brkundefined
                 default:        instr_type_func = INSTR_TYPE_UNKNOWN;
@@ -198,10 +198,10 @@ module cpu6502(output reg [15:0]        addr,
             endcase // case (instr)
         end
     endfunction // instr_type_func
-    
+
 
     wire [4:0] instr_type = instr_type_func(instr);
-   
+
     parameter [3:0]  ADDR_MODE_IMPLIED =       0,
                      ADDR_MODE_IMMEDIATE =     1,
                      ADDR_MODE_ZEROPG =        2,
@@ -220,7 +220,7 @@ module cpu6502(output reg [15:0]        addr,
             casex (instr)
                 8'b0000_0000,                                           // BRK
                 8'b1110_1010: addr_mode_func = ADDR_MODE_IMPLIED;       // NOP
-                
+
                 8'b????_??01:                                           // ALU/STA instr
                     case (instr[4:2])
                         3'b000:  addr_mode_func = ADDR_MODE_INDIRECT_X;
@@ -232,8 +232,8 @@ module cpu6502(output reg [15:0]        addr,
                         3'b110:  addr_mode_func = ADDR_MODE_ABS_Y;
                         3'b111:  addr_mode_func = ADDR_MODE_ABS_X;
                     endcase // case (instr[4:2])
-                
-                // (relative, actually)  conditional branches           
+
+                // (relative, actually)  conditional branches
                 8'b???1_0000:  addr_mode_func = ADDR_MODE_IMMEDIATE;
 
                 8'b1001_1000,                                           // TYA
@@ -244,24 +244,24 @@ module cpu6502(output reg [15:0]        addr,
                     8'b1000_1000,                                       // DEY
                     8'b1000_1010,                                       // TXA
                     8'b1001_1010,                                       // TXS
-            
+
                     8'b11?0_1000,                                       // INCXY;
-            
+
                     8'b???1_1000,                                       // S/C FLAGS;
-            
+
                     8'b0??0_1000:                                       // PUSH/PULL
                         addr_mode_func = ADDR_MODE_IMPLIED;
 
                 8'b0010_0100:   addr_mode_func = ADDR_MODE_ZEROPG;      // BIT
                 8'b0010_1100:   addr_mode_func = ADDR_MODE_ABS;         // BIT
-                
+
                 8'b0010_0000:  addr_mode_func = ADDR_MODE_JMP_ABS;      // JSR
 
                 8'b0100_1100:   addr_mode_func = ADDR_MODE_JMP_ABS;     // JSR
                 8'b0110_1100:   addr_mode_func = ADDR_MODE_JMP_INDIRECT;
-                
+
                 8'b01?0_0000:  addr_mode_func = ADDR_MODE_IMPLIED;      // RTSI
-                
+
                 8'b0???_??10:                   // ASL/LSR/ROL/ROR (shift ops)
                     case (instr[4:2])
                         3'b010:  addr_mode_func = ADDR_MODE_IMPLIED;    // acc
@@ -271,7 +271,7 @@ module cpu6502(output reg [15:0]        addr,
                         3'b111:  addr_mode_func = ADDR_MODE_ABS_X;
                         default: addr_mode_func = 4'hX;
                     endcase
-                
+
                 8'b101?_???0:                                           // LD[XY]
                     case (instr[4:2])
                         3'b000:  addr_mode_func = ADDR_MODE_IMMEDIATE;
@@ -288,7 +288,7 @@ module cpu6502(output reg [15:0]        addr,
                         2'b01:   addr_mode_func = ADDR_MODE_ABS;
                         default: addr_mode_func = 4'hX;
                     endcase
-                
+
                 8'b11?0_??00:                                           // CMP[XY]
                     case (instr[3:2])
                         2'b00:   addr_mode_func = ADDR_MODE_IMMEDIATE;
@@ -296,7 +296,7 @@ module cpu6502(output reg [15:0]        addr,
                         2'b11:   addr_mode_func = ADDR_MODE_ABS;
                         default: addr_mode_func = 4'hX;
                     endcase
-                
+
                 8'b11??_?110:                                           // INC/DEC
                     case (instr[4:3])
                         2'b00:   addr_mode_func = ADDR_MODE_ZEROPG;
@@ -304,16 +304,16 @@ module cpu6502(output reg [15:0]        addr,
                         2'b01:   addr_mode_func = ADDR_MODE_ABS;
                         2'b11:   addr_mode_func = ADDR_MODE_ABS_X;
                     endcase
-                
+
                 default:  addr_mode_func = 3'hX;
-                
+
             endcase // case(instr)
         end
     endfunction
-    
+
 
     wire [3:0] addr_mode = addr_mode_func(instr);
-    
+
     // This function helps further decode
     // conditional branches.
     function [0:0] do_branch_func(input [7:0] instr,
@@ -338,7 +338,7 @@ module cpu6502(output reg [15:0]        addr,
     // Main CPU State machine
     /////////////////////////////////////////////////////
     reg [4:0]      cpu_sm;
-   
+
     parameter [4:0]     CPU_SM_RESET =          5'd0,
                         CPU_SM_VECTOR1 =        5'd1,
                         CPU_SM_VECTOR2 =        5'd2,
@@ -385,7 +385,7 @@ module cpu6502(output reg [15:0]        addr,
         pc <=           pc_nxt;
         sp <=           sp_nxt;
         p <=            p_nxt;
-        
+
         acc <=          acc_nxt;
         x <=            x_nxt;
         y <=            y_nxt;
@@ -411,7 +411,7 @@ module cpu6502(output reg [15:0]        addr,
         addr =          pc;
         data_out =      8'hXX;
         we =            0;
-        
+
         clr_do_nmi =    0;
 
         case (cpu_sm)
@@ -456,7 +456,7 @@ module cpu6502(output reg [15:0]        addr,
                     cpu_sm_nxt = CPU_SM_INTR1;
                 end
                 else begin
-                    
+
                     if (instr_type == INSTR_TYPE_PSHPUL) begin
                         if (instr[5])           // PLP/PLA
                             addr = {8'h01, sp_inc};
@@ -468,7 +468,7 @@ module cpu6502(output reg [15:0]        addr,
                     end
                     else if (instr_type == INSTR_TYPE_RTSI)
                         addr = {8'h01, sp_inc};
-                    
+
                     if (rdy) begin
                         if (addr_mode == ADDR_MODE_IMPLIED) begin
 
@@ -543,11 +543,11 @@ module cpu6502(output reg [15:0]        addr,
                                         2'b10:  {acc_nxt, p_nxt[`P_C]} = {1'b0, acc};   // LSR
                                         2'b11:  {acc_nxt, p_nxt[`P_C]} = {p[`P_C], acc};// ROR
                                     endcase
-                                    
+
                                     p_nxt[`P_Z] = (acc_nxt == 8'h00);
                                     p_nxt[`P_N] = acc_nxt[7];
                                 end
-                                
+
                                 INSTR_TYPE_PSHPUL:
                                     if (instr[5]) begin   // PLP/PLA
                                         sp_nxt = sp_inc;
@@ -557,7 +557,7 @@ module cpu6502(output reg [15:0]        addr,
                                         sp_nxt = sp_dec;
                                         cpu_sm_nxt = CPU_SM_STORE;
                                     end
-                                
+
                                 INSTR_TYPE_RTSI: begin
                                     sp_nxt = sp_inc;
                                     if (instr[5])
@@ -565,7 +565,7 @@ module cpu6502(output reg [15:0]        addr,
                                     else
                                         cpu_sm_nxt = CPU_SM_RTI;
                                 end
-                                
+
                                 INSTR_TYPE_BRK: begin
                                     p_nxt[`P_B] = 1;
                                     cpu_sm_nxt = CPU_SM_INTR1;
@@ -598,7 +598,7 @@ module cpu6502(output reg [15:0]        addr,
 
             // Fetched second byte of an instruction
             CPU_SM_FETCH_I1: begin
-                
+
                 // Calculate address output
                 case (addr_mode)
                     ADDR_MODE_ZEROPG:       addr = {8'h00, data_in_r};
@@ -609,16 +609,16 @@ module cpu6502(output reg [15:0]        addr,
                 endcase
 
                 if ((addr_mode == ADDR_MODE_ZEROPG ||
-                     addr_mode == ADDR_MODE_ZEROPG_X ||      
+                     addr_mode == ADDR_MODE_ZEROPG_X ||
                      addr_mode == ADDR_MODE_ZEROPG_Y) &&
                     (instr_type == INSTR_TYPE_STA ||
                      instr_type == INSTR_TYPE_STXY)) begin
                     we = 1;
                     data_out = ((instr_type == INSTR_TYPE_STA) ? acc : (instr[1] ? x : y));
                 end
-                
+
                 opaddr_h_nxt = 8'h00;
-                
+
                 if (rdy) begin
                     if (instr_type == INSTR_TYPE_JSR) begin
                         opaddr_l_nxt = data_in_r;
@@ -649,7 +649,7 @@ module cpu6502(output reg [15:0]        addr,
                     end
                 end
             end // case: CPU_SM_FETCH_I1
-            
+
             // Fetch third byte of an instruction.
             CPU_SM_FETCH_I2: begin
                 case (addr_mode)
@@ -661,10 +661,10 @@ module cpu6502(output reg [15:0]        addr,
                 if (instr_type == INSTR_TYPE_STA || instr_type == INSTR_TYPE_STXY) begin
                     we = 1;
                     data_out = ((instr_type == INSTR_TYPE_STA) ? acc : (instr[1] ? x : y));
-                end                 
-                
+                end
+
                 opaddr_h_nxt = addr[15:8];
-                    
+
                 if (rdy) begin
                     opaddr_l_nxt = addr[7:0];
                     case (instr_type)
@@ -683,21 +683,21 @@ module cpu6502(output reg [15:0]        addr,
                     endcase
                 end
             end // case: CPU_SM_FETCH_I2
-            
+
             // Fetched one-byte operand or low-byte of address for
             // indirect addressing modes.
             CPU_SM_FETCH_INL: begin
                 addr = {opaddr_h, opaddr_l + 1'b1};
-                
+
                 if (rdy) begin
                     opaddr_l_nxt = data_in_r;
                     cpu_sm_nxt = CPU_SM_FETCH_INH;
                 end
             end
-            
+
             // Fetched high-byte of address for indirect addressing modes.
             CPU_SM_FETCH_INH: begin
-                
+
                 if (addr_mode == ADDR_MODE_INDIRECT_Y)
                     addr = {data_in_r, opaddr_l} + y;
                 else
@@ -706,7 +706,7 @@ module cpu6502(output reg [15:0]        addr,
                     data_out = acc;
                     we = 1;
                 end
-                
+
                 if (rdy) begin
                     case (instr_type)
                         INSTR_TYPE_STA:
@@ -720,7 +720,7 @@ module cpu6502(output reg [15:0]        addr,
                     endcase
                 end
             end // case: CPU_SM_FETCH_INH
-            
+
             // Store cycle
             CPU_SM_STORE:               // STA, STX, STY, all the RMW stores.
                 if (rdy) begin
@@ -728,7 +728,7 @@ module cpu6502(output reg [15:0]        addr,
                     instr_nxt = data_in;
                     cpu_sm_nxt = CPU_SM_DECODE;
                 end
-                
+
             // Execute cycle for instructions not handled in decode cycle
             CPU_SM_EXECUTE: begin
 
@@ -737,7 +737,7 @@ module cpu6502(output reg [15:0]        addr,
                     INSTR_TYPE_BRANCH:
                         if (do_branch_func(instr,p))
                             addr = pc + {{8{data_in_r[7]}}, data_in_r};
-                    
+
                     INSTR_TYPE_SHIFT: begin                     // RMW Shift instructions
                         addr = {opaddr_h, opaddr_l};
                         case (instr[6:5])
@@ -758,9 +758,9 @@ module cpu6502(output reg [15:0]        addr,
                         we = 1;
                     end
                 endcase
-                    
+
                 if (rdy) begin
-                    
+
                     if (addr_mode == ADDR_MODE_IMMEDIATE)
                         pc_nxt = pc_inc;
 
@@ -797,7 +797,7 @@ module cpu6502(output reg [15:0]        addr,
                                     p_nxt[`P_N] = result[7];
                                     p_nxt[`P_Z] = (result == 8'h00);
                                 end
-                                3'b111: begin                 			// SBC
+                                3'b111: begin                           // SBC
                                     if (p[`P_D]) begin:bcd_sbc
                                         reg [4:0] nyb_l;
                                         reg [4:0] nyb_h;
@@ -842,14 +842,14 @@ module cpu6502(output reg [15:0]        addr,
                                 cpu_sm_nxt = CPU_SM_DECODE;
                             end
                         end
-                        
+
                         INSTR_TYPE_SHIFT: begin                     // RMW Shift instructions
                             p_nxt[`P_C] = instr[6] ? data_in_r[0] : data_in_r[7];
                             p_nxt[`P_Z] = (data_out == 8'h00);
                             p_nxt[`P_N] = data_out[7];
                             cpu_sm_nxt = CPU_SM_STORE;
                         end
-                        
+
                         INSTR_TYPE_LDXY: begin                                          // LDX/LDY
                             if (instr[1])
                                 x_nxt = data_in_r;
@@ -862,7 +862,7 @@ module cpu6502(output reg [15:0]        addr,
                             pc_nxt = pc_inc;
                             cpu_sm_nxt = CPU_SM_DECODE;
                         end
-                        
+
                         INSTR_TYPE_CMPXY: begin                                         // CPX/CPY
                             if (instr[5]) begin
                                 p_nxt[`P_N] = (((x - data_in_r) & 8'h80) != 8'h00);
@@ -879,13 +879,13 @@ module cpu6502(output reg [15:0]        addr,
                             pc_nxt = pc_inc;
                             cpu_sm_nxt = CPU_SM_DECODE;
                         end
-                        
+
                         INSTR_TYPE_INCDEC: begin                // INC/DEC (read-modify-write)
                             p_nxt[`P_N] = data_out[7];
-                            p_nxt[`P_Z] = (data_out == 8'h00);                          
+                            p_nxt[`P_Z] = (data_out == 8'h00);
                             cpu_sm_nxt = CPU_SM_STORE;
                         end
-                        
+
                         INSTR_TYPE_BIT: begin                   // BIT instructions
                             p_nxt[`P_N] = data_in_r[7];
                             p_nxt[`P_V] = data_in_r[6];
@@ -895,7 +895,7 @@ module cpu6502(output reg [15:0]        addr,
                             pc_nxt = pc_inc;
                             cpu_sm_nxt = CPU_SM_DECODE;
                         end
-                        
+
                         default: begin
 `ifdef simulation
                             $display("[%t] INSTRUCTION DECODE PROBLEM instr=%h", $time, instr);
@@ -905,7 +905,7 @@ module cpu6502(output reg [15:0]        addr,
                     endcase
                 end // if (rdy)
             end // case: CPU_SM_EXECUTE
-            
+
             // Read cycle for PLA/PLP data_in_rations
             CPU_SM_PULL: begin
                 if (rdy) begin
@@ -925,35 +925,35 @@ module cpu6502(output reg [15:0]        addr,
                     cpu_sm_nxt = CPU_SM_DECODE;
                 end
             end
-                
+
             // Fetched second byte of JSR, begin push of high return address
             CPU_SM_JSR1: begin
                 opaddr_h_nxt = data_in_r;
-                
+
                 addr = {8'h01, sp};
                 data_out = pc[15:8];
                 we = 1;
-                
+
                 if (rdy) begin
                     sp_nxt = sp_dec;
                     cpu_sm_nxt = CPU_SM_JSR2;
                 end
             end
-            
-            // Store cycle for JSR low address push             
+
+            // Store cycle for JSR low address push
             CPU_SM_JSR2: begin
-                
+
                 addr = {8'h01, sp};
                 data_out = pc[7:0];
                 we = 1;
-                
+
                 if (rdy) begin
                     pc_nxt = {opaddr_h, opaddr_l};
                     sp_nxt = sp_dec;
                     cpu_sm_nxt = CPU_SM_STALL;
                 end
             end
-                
+
             // Read cycle for P in RTI instruction
             CPU_SM_RTI: begin
                 addr = {8'h01, sp_inc};
@@ -965,30 +965,30 @@ module cpu6502(output reg [15:0]        addr,
                 end
             end
 
-            // Read cycle for low-byte of return address in RTS/RTI             
+            // Read cycle for low-byte of return address in RTS/RTI
             CPU_SM_RTS1: begin
                 opaddr_l_nxt = data_in_r;
                 addr = {8'h01, sp_inc};
-                
+
                 if (rdy) begin
                     sp_nxt = sp_inc;
                     cpu_sm_nxt = CPU_SM_RTS2;
                 end
             end
-            
-            // Read cycle for high-byte of return address in RTS/RTI.           
+
+            // Read cycle for high-byte of return address in RTS/RTI.
             CPU_SM_RTS2:
                 if (rdy) begin
                     pc_nxt = {data_in_r, opaddr_l} + instr[5];  // add 1 if RTS (vs. RTI)
                     cpu_sm_nxt = CPU_SM_STALL;
                 end
-            
-            // Store cycle for high-byte of PC during interrupt/BRK.            
+
+            // Store cycle for high-byte of PC during interrupt/BRK.
             CPU_SM_INTR1: begin
                 addr = {8'h01, sp};
                 data_out = pc[15:8];
                 we = 1;
-                
+
                 if (rdy) begin
                     sp_nxt = sp_dec;
                     cpu_sm_nxt = CPU_SM_INTR2;
@@ -1000,19 +1000,19 @@ module cpu6502(output reg [15:0]        addr,
                 addr = {8'h01, sp};
                 data_out = pc[7:0];
                 we = 1;
-                
+
                 if (rdy) begin
                     sp_nxt = sp_dec;
                     cpu_sm_nxt = CPU_SM_INTR3;
                 end
             end
-            
+
             // Store cycle for P during interrupt/BRK.
             CPU_SM_INTR3: begin
                 addr = {8'h01, sp};
                 data_out = p;
                 we = 1;
-                
+
                 if (rdy) begin
                     pc_nxt = (do_nmi ? `NMI_VEC : `IRQ_VEC);
                     sp_nxt = sp_dec;
@@ -1024,14 +1024,14 @@ module cpu6502(output reg [15:0]        addr,
                 p_nxt[`P_I] = 1;
                 p_nxt[`P_B] = 0;
                 p_nxt[`P_D] = 0;  // like a 65C02!
-                
+
                 if (rdy) begin
                     pc_nxt = pc_inc;
                     clr_do_nmi = do_nmi;
                     cpu_sm_nxt = CPU_SM_VECTOR1;
                 end
             end
-                
+
             default: begin
                 cpu_sm_nxt = 5'bxxxxx;
 `ifdef simulation
@@ -1041,8 +1041,8 @@ module cpu6502(output reg [15:0]        addr,
                 end
 `endif
             end
-                
+
         endcase // cpu_sm
     end
-    
+
 endmodule // cpu6502

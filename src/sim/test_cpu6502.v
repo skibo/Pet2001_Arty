@@ -96,7 +96,7 @@ module test_cpu6502;
             end
         end
     end
-        
+
     cpu6502 cpu6502_0(
                       .addr(addr),
                       .data_out(data_out),
@@ -108,5 +108,5 @@ module test_cpu6502;
                       .reset(reset),
                       .clk(clk)
     );
-    
+
 endmodule // test_cpu6502
