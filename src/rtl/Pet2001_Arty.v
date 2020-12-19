@@ -64,7 +64,6 @@ module Pet2001_Arty(
 
     ////////////////////////////// Clock and Reset /////////////////////////
     //
-    wire                clkin1;
     wire                clkout0;
     wire                clk;
     wire                clkfbout, clkfbin;
@@ -72,13 +71,10 @@ module Pet2001_Arty(
     reg                 reset_p1;
     reg                 reset;
 
-    // Input clock buffer.
-    IBUFG gclk_inbuf(.I(CLK), .O(clkin1));
-
     MMCME2_BASE #(.CLKIN1_PERIOD(10.0),
                   .CLKFBOUT_MULT_F(10.0),
                   .CLKOUT0_DIVIDE_F(20.0))
-       mmcm0(.CLKIN1(clkin1),
+       mmcm0(.CLKIN1(CLK),
              .CLKFBIN(clkfbin),
              .PWRDWN(1'b0),
              .RST(1'b0),

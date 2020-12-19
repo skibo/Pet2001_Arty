@@ -79,7 +79,6 @@ module Pet2001Real_Arty(
 
     ////////////////////////////// Clock and Reset /////////////////////////
     //
-    wire                clkin1;
     wire                clkout0;
     wire                clk;
     wire                clkfbout, clkfbin;
@@ -87,32 +86,27 @@ module Pet2001Real_Arty(
     reg                 reset_p1;
     reg                 reset;
 
-    // Input clock buffer.
-    IBUFG gclk_inbuf(.I(CLK), .O(clkin1));
-
     MMCME2_BASE #(.CLKIN1_PERIOD(10.0),
                   .CLKFBOUT_MULT_F(8.0),
-                  .CLKOUT0_DIVIDE_F(20.0)
-                  // .CLKOUT1_DIVIDE(40),       // subsequent divides are decimal
-          )
-    mmcm0(.CLKIN1(clkin1),
-          .CLKFBIN(clkfbin),
-          .PWRDWN(1'b0),
-          .RST(1'b0),
-          .CLKOUT0(clkout0),
-          .CLKOUT0B(),
-          .CLKOUT1(),
-          .CLKOUT1B(),
-          .CLKOUT2(),
-          .CLKOUT2B(),
-          .CLKOUT3(),
-          .CLKOUT3B(),
-          .CLKOUT4(),
-          .CLKOUT5(),
-          .CLKOUT6(),
-          .CLKFBOUT(clkfbout),
-          .CLKFBOUTB(),
-          .LOCKED(mmcm_locked)
+                  .CLKOUT0_DIVIDE_F(20.0))
+        mmcm0(.CLKIN1(CLK),
+              .CLKFBIN(clkfbin),
+              .PWRDWN(1'b0),
+              .RST(1'b0),
+              .CLKOUT0(clkout0),
+              .CLKOUT0B(),
+              .CLKOUT1(),
+              .CLKOUT1B(),
+              .CLKOUT2(),
+              .CLKOUT2B(),
+              .CLKOUT3(),
+              .CLKOUT3B(),
+              .CLKOUT4(),
+              .CLKOUT5(),
+              .CLKOUT6(),
+              .CLKFBOUT(clkfbout),
+              .CLKFBOUTB(),
+              .LOCKED(mmcm_locked)
         );
 
     // Output clock buffers.
@@ -133,28 +127,29 @@ module Pet2001Real_Arty(
     wire [3:0] keyrowsel;
     wire [7:0] keycol_n = ~KEYCOL; // See note at top on logic reversal.
 
-    pet2001_top pet_top(.petvid_data_n(PET_VID_DATA_N),
-                        .petvid_horz_n(PET_VID_HORZ_N),
-                        .petvid_vert_n(PET_VID_VERT_N),
+    pet2001_top
+        pet_top(.petvid_data_n(PET_VID_DATA_N),
+                .petvid_horz_n(PET_VID_HORZ_N),
+                .petvid_vert_n(PET_VID_VERT_N),
 
-                        .keyrow(keyrowsel),
-                        .keyin(keycol_n),
+                .keyrow(keyrowsel),
+                .keyin(keycol_n),
 
-                        .cass_motor_n(),
-                        .cass_write(),
-                        .cass_sense_n(1'b1),
-                        .cass_read(1'b1),
+                .cass_motor_n(),
+                .cass_write(),
+                .cass_sense_n(1'b1),
+                .cass_read(1'b1),
 
-                        .audio(),
+                .audio(),
 
-                        .diag_l(diag_l),
+                .diag_l(diag_l),
 
-                        .clk_speed(clk_speed),
-                        .clk_stop(clk_stop),
+                .clk_speed(clk_speed),
+                .clk_stop(clk_stop),
 
-                        .clk(clk),
-                        .reset(reset)
-                );
+                .clk(clk),
+                .reset(reset)
+        );
 
     // Implement "open drain" output bufs: high-Z when deasserted,
     // 1 when asserted.  See note at top.
