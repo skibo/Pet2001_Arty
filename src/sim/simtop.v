@@ -16,7 +16,7 @@ module testPet2001_Arty;
     wire [7:0] KEYCOL;
     pulldown pulls[7:0](KEYCOL); // Implemented in constraints.
 `else
-    wire [1:0] CVID;
+    wire [1:0] COMPVID;
     reg        UART_TXD_IN;
     wire       UART_RXD_OUT;
 `endif
@@ -50,7 +50,7 @@ module testPet2001_Arty;
     Pet2001_Arty dut(.SW(SW),
                      .BTN(BTN),
                      .LED(LED),
-                     .CVID(CVID),
+                     .COMPVID(COMPVID),
                      .UART_TXD_IN(UART_TXD_IN),
                      .UART_RXD_OUT(UART_RXD_OUT),
                      .CLK(CLK100)

@@ -13,7 +13,7 @@
 //      SW[1] -         PET turbo mode
 //      SW[0] -         PET suspend
 //      LED -           PET diagnostic LED.
-//      CVID[1:0] -     PMOD connections JA[9:10], composite video out.
+//      COMPVID[1:0] -  PMOD connections JA[9:10], composite video out.
 //                      Connect JA9 through 330 ohm resistor to RCA jack
 //                      tip and JA10 through 100 ohm resistor to tip and
 //                      ground the ring.
@@ -53,7 +53,7 @@ module Pet2001_Arty(
             input        BTN,
             output reg   LED,
 
-            output [1:0] CVID,
+            output [1:0] COMPVID,
 
             input        UART_TXD_IN,
             output       UART_RXD_OUT,
@@ -77,28 +77,26 @@ module Pet2001_Arty(
 
     MMCME2_BASE #(.CLKIN1_PERIOD(10.0),
                   .CLKFBOUT_MULT_F(10.0),
-                  .CLKOUT0_DIVIDE_F(20.0)
-                  // .CLKOUT1_DIVIDE(40),       // subsequent divides are decimal
-          )
-    mmcm0(.CLKIN1(clkin1),
-          .CLKFBIN(clkfbin),
-          .PWRDWN(1'b0),
-          .RST(1'b0),
-          .CLKOUT0(clkout0),
-          .CLKOUT0B(),
-          .CLKOUT1(),
-          .CLKOUT1B(),
-          .CLKOUT2(),
-          .CLKOUT2B(),
-          .CLKOUT3(),
-          .CLKOUT3B(),
-          .CLKOUT4(),
-          .CLKOUT5(),
-          .CLKOUT6(),
-          .CLKFBOUT(clkfbout),
-          .CLKFBOUTB(),
-          .LOCKED(mmcm_locked)
-        );
+                  .CLKOUT0_DIVIDE_F(20.0))
+       mmcm0(.CLKIN1(clkin1),
+             .CLKFBIN(clkfbin),
+             .PWRDWN(1'b0),
+             .RST(1'b0),
+             .CLKOUT0(clkout0),
+             .CLKOUT0B(),
+             .CLKOUT1(),
+             .CLKOUT1B(),
+             .CLKOUT2(),
+             .CLKOUT2B(),
+             .CLKOUT3(),
+             .CLKOUT3B(),
+             .CLKOUT4(),
+             .CLKOUT5(),
+             .CLKOUT6(),
+             .CLKFBOUT(clkfbout),
+             .CLKFBOUTB(),
+             .LOCKED(mmcm_locked)
+       );
 
     // Output clock buffers.
     BUFG clk0_buf (.I(clkout0), .O(clk));
@@ -118,55 +116,58 @@ module Pet2001_Arty(
     wire [3:0] keyrow;
     wire [7:0] keyin;
 
-    pet2001_top pet_top(.vidout(CVID),
+    pet2001_top
+        pet_top(.vidout(COMPVID),
 
-                        .keyrow(keyrow),
-                        .keyin(keyin),
+                .keyrow(keyrow),
+                .keyin(keyin),
 
-                        .cass_motor_n(),
-                        .cass_write(),
-                        .cass_sense_n(1'b1),
-                        .cass_read(1'b1),
+                .cass_motor_n(),
+                .cass_write(),
+                .cass_sense_n(1'b1),
+                .cass_read(1'b1),
 
-                        .audio(),
+                .audio(),
 
-                        .diag_l(diag_l),
+                .diag_l(diag_l),
 
-                        .clk_speed(clk_speed),
-                        .clk_stop(clk_stop),
+                .clk_speed(clk_speed),
+                .clk_stop(clk_stop),
 
-                        .clk(clk),
-                        .reset(reset)
-                );
+                .clk(clk),
+                .reset(reset)
+        );
 
     assign UART_RXD_OUT = UART_TXD_IN; // echo back serial data
 
     wire [7:0] uart_data;
     wire       uart_strobe;
 
-    uart #(.CLK_DIVIDER(5208)) uart0(.serial_out(),
-                                     .serial_in(UART_TXD_IN),
+    uart #(.CLK_DIVIDER(5208))
+       uart0(.serial_out(),
+             .serial_in(UART_TXD_IN),
 
-                                     .write_rdy(), // unused xmit interface
-                                     .write_data(8'h00),
-                                     .write_strobe(1'b0),
+             .write_rdy(), // unused xmit interface
+             .write_data(8'h00),
+             .write_strobe(1'b0),
 
-                                     .read_data(uart_data),
-                                     .read_strobe(uart_strobe),
+             .read_data(uart_data),
+             .read_strobe(uart_strobe),
 
-                                     .clk(clk),
-                                     .reset(reset)
-                                );
+             .clk(clk),
+             .reset(reset)
+       );
 
-    pet2001uart_keys petkeys(.keyrow(keyrow),
-                             .keyin(keyin),
+    pet2001uart_keys
+        petkeys(.keyrow(keyrow),
+                .keyin(keyin),
 
-                             .uart_data(uart_data),
-                             .uart_strobe(uart_strobe),
+                .uart_data(uart_data),
+                .uart_strobe(uart_strobe),
 
-                             .clk(clk),
-                             .reset(reset)
-                        );
+                .clk(clk),
+                .reset(reset)
+         );
 
     always @(posedge clk)
         LED <= (keyrow == 4'd11); // diag LED
