@@ -3,17 +3,18 @@
 // Engineer:    Thomas Skibo
 //
 // Create Date: Sep 23, 2011
-// Modified:    Jan 24, 2013
+// Modified:    Dec 18, 2020
 //
 // Module Name: pet2001vidram
 //
 // Description:
 //
-//      2K of commodore PET video RAM built using a Artix-7 18 kbit two-port
-//      RAM.  This resides in the 0x8000-0x87FF address region.  The second
-//      memory port is used by the video interface.  Unlike early PETs, you
-//      won't get "snow" on the display if you write this at the same time as
-//      the video hardware is reading it.  Although, that would be fun.
+//      1K of commodore PET video RAM.  This is implemented as an 8x1K dual-
+//      port RAM.  This resides in the 0x8000-0x83FF address region.  The
+//      second memory port is used by the video interface.  Unlike early PETs,
+//      you won't get "snow" on the display if you write this at the same time
+//      as the video hardware is reading it.  Although, that would be fun to
+//      emulate.
 //
 //      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
 //      should not generate an inverter on the clock line here but instead
@@ -22,7 +23,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2011, Thomas Skibo.  All rights reserved.
+// Copyright (C) 2011, 2020, Thomas Skibo.  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -48,41 +49,28 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module pet2001vidram(output [7:0]       data_out,       // cpu interface
+module pet2001vidram(output reg [7:0]   data_out,   // cpu interface
                      input [7:0]        data_in,
-                     input [10:0]       cpu_addr,
+                     input [9:0]        cpu_addr,
                      input              we,
 
-                     output [7:0]       video_data,     // video hardware intf
-                     input [10:0]       video_addr,
+                     output reg [7:0]   video_data, // video hardware intf
+                     input [9:0]        video_addr,
 
                      input              clk
              );
 
-    // A single Artix-7 8x2k 2-port RAM.  Easy.
-    BRAM_TDP_MACRO
-        #(.BRAM_SIZE("18Kb"),
-          .WRITE_WIDTH_A(8),
-          .READ_WIDTH_A(8),
-          .WRITE_WIDTH_B(8),
-          .READ_WIDTH_B(8)
-          ) ram (.DIA(data_in),
-                 .DOA(data_out),
-                 .ADDRA(cpu_addr),
-                 .WEA(we),
-                 .ENA(1'b1),
-                 .REGCEA(1'b0),
-                 .RSTA(1'b0),
-                 .CLKA(~clk),           // see description
+    (* ram_style = "block" *)
+    reg [7 : 0] ram[1023 : 0];
 
-                 .DIB(8'h00),
-                 .DOB(video_data),
-                 .ADDRB(video_addr),
-                 .WEB(1'b0),
-                 .ENB(1'b1),
-                 .REGCEB(1'b0),
-                 .RSTB(1'b0),
-                 .CLKB(~clk)            // see description
-        );
+    always @(negedge clk)
+        if (we)
+            ram[cpu_addr] <= data_in;
+
+    always @(negedge clk)
+        data_out <= ram[cpu_addr];
+
+    always @(negedge clk)
+        video_data <= ram[video_addr];
 
 endmodule // pet2001vidram
