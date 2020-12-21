@@ -44,7 +44,7 @@
 
 module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
 
-                   output reg [10:0] video_addr,        // Video RAM intf
+                   output reg [9:0]  video_addr,        // Video RAM intf
                    input [7:0]       video_data,
 
                    output [10:0]     charaddr,          // char rom intf
@@ -150,7 +150,7 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
     // each row 8 times before video_row_addr is incremented.
     always @(posedge clk)
         if (reset || (next_line && clk_div))
-            video_addr <= { 1'b0, video_row_addr };
+            video_addr <= video_row_addr;
         else if (is_pet_row && is_pet_col && pixel_xbit == 3'd6 && clk_div)
             video_addr <= video_addr + 1'b1;
 

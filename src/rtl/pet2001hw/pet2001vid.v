@@ -38,11 +38,11 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-module pet2001vid(output reg        vid_n,		// Pet video interface
+module pet2001vid(output reg        vid_n,      // Pet video interface
                   output reg        vert_n,
                   output reg        horz_n,
 
-                  output reg [10:0] video_addr, // Video RAM intf
+                  output reg [9:0]  video_addr, // Video RAM intf
                   input [7:0]       video_data,
 
                   output reg [10:0] charaddr,   // char rom intf
@@ -58,7 +58,7 @@ module pet2001vid(output reg        vid_n,		// Pet video interface
 
     ////////////////////////////// video counters //////////////////////////
     //
-    reg [8:0]	h_counter;
+    reg [8:0]   h_counter;
     reg [8:0]   v_counter;
     wire        next_line;
     wire        next_screen;
@@ -164,7 +164,7 @@ module pet2001vid(output reg        vid_n,		// Pet video interface
     // each row 8 times before video_row_addr is incremented.
     always @(posedge clk)
         if (next_line)
-            video_addr <= {1'b0, video_row_addr};
+            video_addr <= video_row_addr;
         else if (is_pet_col && pixel_xbit == 3'd6 && clk_div)
             video_addr <= video_addr + 1'b1;
 

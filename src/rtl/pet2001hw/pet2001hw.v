@@ -39,7 +39,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 module pet2001hw(
-                 input [15:0]     addr, // CPU Interface
+                 input [15:0]     addr,             // CPU Interface
                  input [7:0]      data_in,
                  output reg [7:0] data_out,
                  input            we,
@@ -50,19 +50,25 @@ module pet2001hw(
                  output           petvid_data_n,    // PET video interface
                  output           petvid_horz_n,
                  output           petvid_vert_n,
+`elsif PET_COMP
+                 output [1:0]     vidout,           // Composite video
 `else
-                 output [1:0]     vidout, // Composite video
+                 output [3:0]     vga_r,            // VGA video
+                 output [3:0]     vga_g,
+                 output [3:0]     vga_b,
+                 output           vga_hsync,
+                 output           vga_vsync,
 `endif
 
-                 output [3:0]     keyrow, // Keyboard
+                 output [3:0]     keyrow,           // Keyboard
                  input [7:0]      keyin,
 
-                 output           cass_motor_n, // Cassette
+                 output           cass_motor_n,     // Cassette
                  output           cass_write,
                  input            cass_sense_n,
                  input            cass_read,
 
-                 output           audio, // CB2 audio
+                 output           audio,            // CB2 audio
 
                  input            clk_speed,
                  input            clk_stop,
@@ -145,7 +151,7 @@ module pet2001hw(
     wire [7:0]  ram_data;
     wire [7:0]  vram_data;
     wire [7:0]  video_data;
-    wire [10:0] video_addr;
+    wire [9:0]  video_addr;
 
     wire        ram_we = we && !addr[15];
     wire        vram_we = we && (addr[15:11] == 5'b1000_0);
@@ -160,7 +166,7 @@ module pet2001hw(
 
     pet2001vidram vidram(.data_out(vram_data),
                          .data_in(data_in),
-                         .cpu_addr(addr[10:0]),
+                         .cpu_addr(addr[9:0]),
                          .we(vram_we),
 
                          .video_addr(video_addr),
@@ -195,8 +201,28 @@ module pet2001hw(
                     .clk(clk),
                     .reset(reset)
             );
-`else
+`elsif PET_COMP
     pet2001ntsc vid(.vidout(vidout),
+
+                    .video_addr(video_addr),
+                    .video_data(video_data),
+
+                    .charaddr(charaddr),
+                    .chardata(chardata),
+
+                    .video_on(video_on),
+                    .video_blank(video_blank),
+                    .video_gfx(video_gfx),
+
+                    .clk(clk),
+                    .reset(reset)
+            );
+`else
+    pet2001vga  vid(.vga_r(vga_r),
+                    .vga_g(vga_g),
+                    .vga_b(vga_b),
+                    .vga_hsync(vga_hsync),
+                    .vga_vsync(vga_vsync),
 
                     .video_addr(video_addr),
                     .video_data(video_data),

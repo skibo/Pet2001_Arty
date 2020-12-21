@@ -15,11 +15,19 @@ module testPet2001_Arty;
     wire [9:0] KEYROW;
     wire [7:0] KEYCOL;
     pulldown pulls[7:0](KEYCOL); // Implemented in constraints.
-`else
+`else // !PET_REAL
+ `ifdef PET_COMP
     wire [1:0] COMPVID;
+ `else
+    wire [3:0] VGA_R;
+    wire [3:0] VGA_G;
+    wire [3:0] VGA_B;
+    wire       VGA_HSYNC;
+    wire       VGA_VSYNC;
+ `endif // !PET_COMP
     reg        UART_TXD_IN;
     wire       UART_RXD_OUT;
-`endif
+`endif // !PET_REAL
     wire       LED;
     reg        CLK100;
 
@@ -46,15 +54,23 @@ module testPet2001_Arty;
                          .KEYCOL(KEYCOL),
                          .CLK(CLK100)
                   );
-`else
+`else // !PET_REAL
     Pet2001_Arty dut(.SW(SW),
                      .BTN(BTN),
                      .LED(LED),
+ `ifdef PET_COMP
                      .COMPVID(COMPVID),
+ `else
+                     .VGA_R(VGA_R),
+                     .VGA_G(VGA_G),
+                     .VGA_B(VGA_B),
+                     .VGA_HSYNC(VGA_HSYNC),
+                     .VGA_VSYNC(VGA_VSYNC),
+ `endif // !PET_COMP
                      .UART_TXD_IN(UART_TXD_IN),
                      .UART_RXD_OUT(UART_RXD_OUT),
                      .CLK(CLK100)
                   );
-`endif
+`endif // !PET_REAL
 
 endmodule // testPet2001_Arty

@@ -17,6 +17,12 @@
 //                      Connect JA9 through 330 ohm resistor to RCA jack
 //                      tip and JA10 through 100 ohm resistor to tip and
 //                      ground the ring.
+//        (OR)
+//      VGA_R[3:0] -    PMOD connections to JA and JB on Arty.  The constraints
+//      VGA_G[3:0] -    file assigns these signals to the proper pins so as to
+//      VGA_B[3:0] -    interface to Digilent's PmodVGA PMOD board.
+//      VGA_HSYNC -
+//      VGA_VSYNC -
 //      UART_TXD_IN -   UART signal FROM USB/UART chip.  Characters received
 //                      are turned into PET keystrokes.  9600 baud.
 //
@@ -53,7 +59,15 @@ module Pet2001_Arty(
             input        BTN,
             output reg   LED,
 
+`ifdef PET_COMP
             output [1:0] COMPVID,
+`else
+            output [3:0] VGA_R,
+            output [3:0] VGA_G,
+            output [3:0] VGA_B,
+            output       VGA_HSYNC,
+            output       VGA_VSYNC,
+`endif
 
             input        UART_TXD_IN,
             output       UART_RXD_OUT,
@@ -113,7 +127,16 @@ module Pet2001_Arty(
     wire [7:0] keyin;
 
     pet2001_top
-        pet_top(.vidout(COMPVID),
+        pet_top(
+`ifdef PET_COMP
+                .vidout(COMPVID),
+`else
+                .vga_r(VGA_R),
+                .vga_g(VGA_G),
+                .vga_b(VGA_B),
+                .vga_hsync(VGA_HSYNC),
+                .vga_vsync(VGA_VSYNC),
+`endif
 
                 .keyrow(keyrow),
                 .keyin(keyin),
