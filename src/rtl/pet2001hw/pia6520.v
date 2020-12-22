@@ -85,9 +85,9 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
 
     wire        wr_strobe = strobe && we;
     wire        rd_strobe = strobe && !we;
-    wire        porta_rd_strobe = rd_strobe && addr == ADDR_PORTA;
-    wire        portb_rd_strobe = rd_strobe && addr == ADDR_PORTB;
-    wire        portb_wr_strobe = wr_strobe && addr == ADDR_PORTB;
+    wire        porta_rd_strobe = rd_strobe && addr == ADDR_PORTA && cra[2];
+    wire        portb_rd_strobe = rd_strobe && addr == ADDR_PORTB && crb[2];
+    wire        portb_wr_strobe = wr_strobe && addr == ADDR_PORTB && crb[2];
 
     // Implement CRA[5:0]
     always @(posedge clk)
@@ -121,7 +121,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
     always @(posedge clk)
         if (reset)
             portb_out <= 8'h00;
-        else if (wr_strobe && addr == ADDR_PORTB && crb[2])
+        else if (portb_wr_strobe)
             portb_out <= data_in;
 
     // Implement DDRB
@@ -157,7 +157,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
 
     // IRQA2
     always @(posedge clk)
-        if (reset || (porta_rd_strobe && !ca2_act_trans))
+        if (reset || (porta_rd_strobe && !(ca2_act_trans && !cra[5])))
             irqa2 <= 1'b0;
         else if (ca2_act_trans && !cra[5])
             irqa2 <= 1'b1;
@@ -189,7 +189,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
 
     // IRQB2
     always @(posedge clk)
-        if (reset || (portb_rd_strobe && !cb2_act_trans))
+        if (reset || (portb_rd_strobe && !(cb2_act_trans && !crb[5])))
             irqb2 <= 1'b0;
         else if (cb2_act_trans && !crb[5])
             irqb2 <= 1'b1;
