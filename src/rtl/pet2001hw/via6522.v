@@ -182,12 +182,12 @@ module via6522(output reg [7:0] data_out,       // cpu interface
     wire        ca1_act_trans = ((ca1_in && !ca1_in_1 && pcr[0]) ||
                                  (!ca1_in && ca1_in_1 && !pcr[0]));
     wire        ca2_act_trans = ((ca2_in && !ca2_in_1 && pcr[2]) ||
-                                 (!ca2_in && ca2_in_1 && !pcr[2]));
+                                 (!ca2_in && ca2_in_1 && !pcr[2])) && !pcr[3];
 
     // logic for clearing CA1 and CA2 interrupt bits.
     wire        irq_ca1_clr = ((strobe && addr == ADDR_PORTA) ||
                                (wr_strobe && addr == ADDR_IFR && data_in[1]));
-    wire        irq_ca2_clr = ((strobe && addr == ADDR_PORTA) ||
+    wire        irq_ca2_clr = ((strobe && addr == ADDR_PORTA && !pcr[1]) ||
                                (wr_strobe && addr == ADDR_IFR && data_in[0]));
 
     always @(posedge clk)
@@ -220,12 +220,12 @@ module via6522(output reg [7:0] data_out,       // cpu interface
     wire        cb1_act_trans = ((cb1_in && !cb1_in_1 && pcr[4]) ||
                                  (!cb1_in && cb1_in_1 && !pcr[4]));
     wire        cb2_act_trans = ((cb2_in && !cb2_in_1 && pcr[6]) ||
-                                 (!cb2_in && cb2_in_1 && !pcr[6]));
+                                 (!cb2_in && cb2_in_1 && !pcr[6])) && !pcr[7];
 
     // logic for clearing CB1 and CB2 interrupt bits.
     wire        irq_cb1_clr = ((strobe && addr == ADDR_PORTB) ||
                                (wr_strobe && addr == ADDR_IFR && data_in[4]));
-    wire        irq_cb2_clr = ((strobe && addr == ADDR_PORTB) ||
+    wire        irq_cb2_clr = ((strobe && addr == ADDR_PORTB && !pcr[5]) ||
                                (wr_strobe && addr == ADDR_IFR && data_in[3]));
 
     always @(posedge clk)
@@ -246,8 +246,8 @@ module via6522(output reg [7:0] data_out,       // cpu interface
         case (pcr[3:1])
             3'b100:     ca2_out <= irq_ca1;
             3'b101:     ca2_out <= !ca1_act_trans;
-            3'b111:     ca2_out <= 1'b1;
-            default:    ca2_out <= 1'b0;
+            3'b110:     ca2_out <= 1'b0;
+            default:    ca2_out <= 1'b1;
         endcase
 
     reg cb2_out_r;
@@ -267,8 +267,8 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             case (pcr[7:5])
                 3'b100: cb2_out <= cb2_out_r;
                 3'b101: cb2_out <= !portb_wr_strobe;
-                3'b111: cb2_out <= 1'b1;
-                default: cb2_out <= 1'b0;
+                3'b110: cb2_out <= 1'b0;
+                default: cb2_out <= 1'b1;
             endcase
     end
 
