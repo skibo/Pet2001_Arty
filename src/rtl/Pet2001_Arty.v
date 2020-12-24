@@ -59,6 +59,8 @@ module Pet2001_Arty(
             input        BTN,
             output reg   LED,
 
+            output       AUDIO,
+
 `ifdef PET_COMP
             output [1:0] COMPVID,
 `else
@@ -146,7 +148,7 @@ module Pet2001_Arty(
                 .cass_sense_n(1'b1),
                 .cass_read(1'b1),
 
-                .audio(),
+                .audio(AUDIO),
 
                 .diag_l(diag_l),
 
