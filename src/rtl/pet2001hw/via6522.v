@@ -268,7 +268,7 @@ module via6522(output reg [7:0] data_out,       // cpu interface
                 3'b100: cb2_out <= cb2_out_r;
                 3'b101: cb2_out <= !portb_wr_strobe;
                 3'b111: cb2_out <= 1'b1;
-                default:        cb2_out <= 1'b0;
+                default: cb2_out <= 1'b0;
             endcase
     end
 
@@ -286,13 +286,16 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             portb_in_r <= portb_in;
 
     ///////////////////////////////////////////////////
-   // Timers
+    // Timers
     reg [15:0] timer1;
     reg [7:0]  timer1_latch_lo;
     reg [7:0]  timer1_latch_hi;
+    reg        timer1_undf;
 
     reg [15:0] timer2;
     reg [7:0]  timer2_latch_lo;
+    reg        timer2l_reload;
+    reg        timer2_undf;
 
     reg        irq_t1_one_shot;
     reg        irq_t1;
@@ -301,14 +304,23 @@ module via6522(output reg [7:0] data_out,       // cpu interface
 
     // TIMER1
     always @(posedge clk)
-        if (reset)
+        if (reset) begin
             timer1 <= 16'hffff;
-        else if (wr_strobe && addr == ADDR_TIMER1_HI)
+            timer1_undf <= 0;
+        end
+        else if (wr_strobe && addr == ADDR_TIMER1_HI) begin
             timer1 <= {data_in, timer1_latch_lo};
-        else if (timer1 == 16'h0000 && slow_clock && acr[6])
+            timer1_undf <= 0;
+        end
+        else if (timer1_undf && slow_clock) begin
             timer1 <= {timer1_latch_hi, timer1_latch_lo};
-        else if (slow_clock)
+            timer1_undf <= 0;
+        end
+        else if (slow_clock) begin
+            if (timer1 == 16'h0000)
+                timer1_undf <= 1;
             timer1 <= timer1 - 1'b1;
+        end
 
     // T1 latch lo
     always @(posedge clk)
@@ -332,11 +344,11 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             irq_t1_one_shot <= 1'b0;
         else if (wr_strobe && addr == ADDR_TIMER1_HI)
             irq_t1_one_shot <= 1'b1;
-        else if (timer1 == 16'h0000 && slow_clock)
+        else if (timer1_undf && slow_clock && !acr[6])
             irq_t1_one_shot <= 1'b0;
 
     // T1 interrupt set and clear logic
-    wire        irq_t1_set = (timer1 == 16'h0000 && slow_clock &&
+    wire        irq_t1_set = (timer1_undf && slow_clock &&
                               (irq_t1_one_shot || acr[6]));
     wire        irq_t1_clr = ((wr_strobe && addr == ADDR_TIMER1_HI) ||
                               (wr_strobe && addr == ADDR_TIMER1_LATCH_HI) ||
@@ -350,23 +362,44 @@ module via6522(output reg [7:0] data_out,       // cpu interface
         else if (irq_t1_set)
             irq_t1 <= 1'b1;
 
-    // I forget what this is for
+    // Generate PB7 for T1 output modes (acr[7]=1)
     always @(posedge clk)
         if (reset)
             pb7_nxt <= 1'b1;
         else if (wr_strobe && addr == ADDR_TIMER1_HI)
             pb7_nxt <= 1'b0;
-        else if (timer1 == 16'h0001 && slow_clock)
+        else if (timer1_undf && slow_clock)
             pb7_nxt <= !pb7_nxt;
+
+    // Find portb[6] transitions.
+    reg         pb6_in;
+    wire        pb6_trans = !portb_in[6] && pb6_in;
+    always @(posedge clk)
+        if (slow_clock)
+            pb6_in <= portb_in[6];
 
     // TIMER2
     always @(posedge clk)
-        if (reset)
+        if (reset) begin
             timer2 <= 16'hffff;
-        else if (wr_strobe && addr == ADDR_TIMER2_HI)
+            timer2_undf <= 0;
+            timer2l_reload <= 0;
+        end
+        else if (wr_strobe && addr == ADDR_TIMER2_HI) begin
             timer2 <= {data_in, timer2_latch_lo};
-        else if ((!acr[5] || !portb_in[6]) && slow_clock)
+            timer2_undf <= 0;
+        end
+        else if (timer2l_reload && slow_clock) begin
+            timer2[7:0] <= timer2_latch_lo;
+            timer2l_reload <= 0;
+        end
+        else if ((!acr[5] || pb6_trans) && slow_clock) begin
+            // Reload T2L on next cycle?
+            if (timer2[7:0] == 8'h00 && (acr[4] || acr[2]))
+                timer2l_reload <= 1;
+            timer2_undf <= timer2 == 16'h0000;
             timer2 <= timer2 - 1'b1;
+        end
 
     // T2 latch lo (i.e. writes to T2L)
     always @(posedge clk)
@@ -381,11 +414,11 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             irq_t2_one_shot <= 1'b0;
         else if (wr_strobe && addr == ADDR_TIMER2_HI)
             irq_t2_one_shot <= 1'b1;
-        else if (timer2 == 16'h0000 && slow_clock)
+        else if (timer2_undf && slow_clock)
             irq_t2_one_shot <= 1'b0;
 
     // T2 IRQ set and clear logic
-    wire        irq_t2_set = (timer2 == 16'h0000 && slow_clock &&
+    wire        irq_t2_set = (timer2_undf && slow_clock &&
                               irq_t2_one_shot);
     wire        irq_t2_clr = ((wr_strobe && addr == ADDR_TIMER2_HI) ||
                               (rd_strobe && addr == ADDR_TIMER2_LO) ||
@@ -403,10 +436,8 @@ module via6522(output reg [7:0] data_out,       // cpu interface
     // SR - shift register
     reg [7:0]   sr;
     reg [2:0]   sr_cntr;
-    reg [7:0]   sr_clk_div_ctr;
-    reg         sr_clk_div;
-    reg         irq_sr;
     reg         sr_go;
+    reg         irq_sr;
     reg         do_shift;
 
     always @(posedge clk)
@@ -414,33 +445,21 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             sr <= 8'h00;
         else if (wr_strobe && addr == ADDR_SR)
             sr <= data_in;
-        else if (do_shift)
-            sr <= { sr[6:0], (acr[4] ? sr[7] : cb2_in) };
+        else if (do_shift && cb1_out)
+            sr <= {sr[6:0], (acr[4] ? sr[7] : cb2_in)};
 
-    assign cb2_sr_out = sr[7];
-
-    always @(posedge clk)
-        if (reset)
-            sr_clk_div_ctr <= 8'd0;
-        else if (slow_clock && sr_clk_div_ctr == 8'd0)
-            sr_clk_div_ctr <= timer2_latch_lo;
-        else if (slow_clock)
-            sr_clk_div_ctr <= sr_clk_div_ctr - 1'b1;
-
-    always @(posedge clk)
-        if (reset)
-            sr_clk_div <= 1'b0;
-        else
-            sr_clk_div <= (slow_clock && sr_clk_div_ctr == 8'd0);
+    assign cb2_sr_out = sr[0];
 
     always @(posedge clk)
         if (reset || (strobe && addr == ADDR_SR))
             sr_cntr <= 3'd7;
-        else if (do_shift)
+        else if (do_shift && acr[4:2] != 3'b100 &&
+                 (!cb1_out || acr[3:2] == 2'b11))
             sr_cntr <= sr_cntr - 1'b1;
 
     // SR IRQ set and clr logic
-    wire        irq_sr_set = do_shift && sr_cntr == 3'b000;
+    wire        irq_sr_set = do_shift && sr_cntr == 3'b000 &&
+                              (!cb1_out || acr[3:2] == 2'b11);
     wire        irq_sr_clr = ((strobe && addr == ADDR_SR) ||
                               (wr_strobe && addr == ADDR_IFR && data_in[2]));
 
@@ -460,22 +479,27 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             sr_go <= 1'b0;
 
     // cominatorial logic for do_shift signal.
-    always @(sr_clk_div or slow_clock or cb1_act_trans or sr_go or acr)
-        case (acr[4:2])
-            3'b000:     do_shift = 1'b0;
-            3'b100:     do_shift = sr_clk_div;
-            3'b001,
-                3'b101: do_shift = (sr_go && sr_clk_div);
-            3'b010,
-                3'b110: do_shift = (sr_go && slow_clock);
-            3'b011,
-                3'b111: do_shift = cb1_act_trans;
-        endcase
+    always @(*)
+        if (sr_go)
+            case (acr[4:2])
+                3'b000:
+                    do_shift = 1'b0;
+                3'b001, 3'b100, 3'b101:
+                    do_shift = slow_clock && timer2l_reload;
+                3'b010, 3'b110:
+                    do_shift = slow_clock;
+                3'b011:
+                    do_shift = cb1_in && !cb1_in_1;
+                3'b111:
+                    do_shift = !cb1_in && cb1_in_1;
+            endcase
+        else
+            do_shift = 1'b0;
 
     always @(posedge clk)
         if (reset)
             cb1_out <= 1'b1;
-        else if (do_shift)
+        else if (do_shift && acr[3:2] != 3'b11)
             cb1_out <= !cb1_out;
 
     ////////////////////////////////////////////////////////
@@ -483,11 +507,11 @@ module via6522(output reg [7:0] data_out,       // cpu interface
     //
 
     // IFR register (not including bit 7)
-    wire [6:0]  ifr = { irq_t1, irq_t2, irq_cb1,
-                        irq_cb2, irq_sr, irq_ca1, irq_ca2 };
+    wire [6:0]  ifr = {irq_t1, irq_t2, irq_cb1,
+                        irq_cb2, irq_sr, irq_ca1, irq_ca2};
 
     // IRQ combinatorial logic
-    wire        irq_p = |{ (ifr & ier) };
+    wire        irq_p = |{(ifr & ier)};
 
     // IRQ output
     always @(posedge clk)
@@ -513,10 +537,10 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             ADDR_TIMER1_LATCH_HI:       data_out = timer1_latch_hi;
             ADDR_TIMER2_LO:             data_out = timer2[7:0];
             ADDR_TIMER2_HI:             data_out = timer2[15:8];
-            ADDR_IER:                   data_out = { 1'b1, ier };
+            ADDR_IER:                   data_out = {1'b1, ier};
             ADDR_PCR:                   data_out = pcr;
             ADDR_ACR:                   data_out = acr;
-            ADDR_IFR:                   data_out = { irq_p, ifr };
+            ADDR_IFR:                   data_out = {irq_p, ifr};
             ADDR_SR:                    data_out = sr;
             ADDR_PORTA_NH:              data_out = porta;
             default:                    data_out = 8'hXX;
