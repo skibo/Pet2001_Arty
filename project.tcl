@@ -47,6 +47,8 @@
 #    "src/sim/simtop.v"
 #    "src/sim/sim_petkeys.v"
 #    "src/sim/test_cpu6502.v"
+#    "src/sim/test_via6522.v"
+#    "src/sim/test_pia6520.v"
 #
 #*****************************************************************************************
 
@@ -215,6 +217,8 @@ set files [list \
  [file normalize "${origin_dir}/src/sim/simtop.v"] \
  [file normalize "${origin_dir}/src/sim/sim_petkeys.v"] \
  [file normalize "${origin_dir}/src/sim/test_cpu6502.v"] \
+ [file normalize "${origin_dir}/src/sim/test_via6522.v"] \
+ [file normalize "${origin_dir}/src/sim/test_pia6520.v"] \
 ]
 add_files -norecurse -fileset $obj $files
 
