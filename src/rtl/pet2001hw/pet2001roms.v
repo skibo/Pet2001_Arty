@@ -62,7 +62,7 @@ module pet2001roms(
     (* ram_style = "block" *)
     reg [7 : 0] rom[16383 : 0];
 
-    initial $readmemh("pet2001_rom1.mem", rom);
+    initial $readmemh("pet2001_rom2.mem", rom);
 
     always @(negedge clk)
         chardata <= rom[{3'b101, charaddr}];
