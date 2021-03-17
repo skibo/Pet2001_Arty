@@ -24,9 +24,17 @@ module testPet2001_Arty;
     wire [3:0] VGA_B;
     wire       VGA_HSYNC;
     wire       VGA_VSYNC;
+    wire       AUDIO;
+    wire       CASS_WR;
+    reg        CASS_RD;
  `endif // !PET_COMP
+ `ifdef PET_UART
     reg        UART_TXD_IN;
     wire       UART_RXD_OUT;
+ `else
+    reg		   PS2_CLK;
+    reg        PS2_DATA;
+ `endif // !PET_UART
 `endif // !PET_REAL
     wire       LED;
     reg        CLK100;
@@ -35,7 +43,13 @@ module testPet2001_Arty;
         SW = 3'b000;
         BTN = 1'b0;
 `ifndef PET_REAL
+ `ifdef PET_UART
         UART_TXD_IN = 1'b1;
+ `else
+        PS2_CLK = 1'b1;
+        PS2_DATA = 1'b1;
+ `endif
+        CASS_RD = 1'b1;
 `endif
         CLK100 = 1'b0;
     end
@@ -58,6 +72,9 @@ module testPet2001_Arty;
     Pet2001_Arty dut(.SW(SW),
                      .BTN(BTN),
                      .LED(LED),
+                     .AUDIO(AUDIO),
+                     .CASS_WR(CASS_WR),
+                     .CASS_RD(CASS_RD),
  `ifdef PET_COMP
                      .COMPVID(COMPVID),
  `else
@@ -67,8 +84,13 @@ module testPet2001_Arty;
                      .VGA_HSYNC(VGA_HSYNC),
                      .VGA_VSYNC(VGA_VSYNC),
  `endif // !PET_COMP
+ `ifdef PET_UART
                      .UART_TXD_IN(UART_TXD_IN),
                      .UART_RXD_OUT(UART_RXD_OUT),
+ `else
+                     .PS2_CLK(PS2_CLK),
+                     .PS2_DATA(PS2_DATA),
+ `endif // !PET_UART
                      .CLK(CLK100)
                   );
 `endif // !PET_REAL

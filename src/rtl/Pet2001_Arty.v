@@ -3,9 +3,10 @@
 // Pet2001_Arty.v
 //
 //      This is the very top module for Pet2001 in Digilent Arty FPGA
-//      evaluation board.  This version converts UART inputs into PET
-//      keystrokes and outputs composite video.  An adapter plugged into PMOD
-//      connector JA is needed to produce the composite video signal.
+//      evaluation board.  This version converts PS/2 input into PET
+//      keystrokes and outputs VGA video.  A PmodVGA adapter is needed
+//      on PMOD connectors JA and JB and a PS/2 adapter is needed on
+//      connector JD.
 //
 // Interfaces:
 //      BTN -           Button 0, system reset.
@@ -13,18 +14,16 @@
 //      SW[1] -         PET turbo mode
 //      SW[0] -         PET suspend
 //      LED -           PET diagnostic LED.
-//      COMPVID[1:0] -  PMOD connections JA[9:10], composite video out.
-//                      Connect JA9 through 330 ohm resistor to RCA jack
-//                      tip and JA10 through 100 ohm resistor to tip and
-//                      ground the ring.
-//        (OR)
 //      VGA_R[3:0] -    PMOD connections to JA and JB on Arty.  The constraints
 //      VGA_G[3:0] -    file assigns these signals to the proper pins so as to
 //      VGA_B[3:0] -    interface to Digilent's PmodVGA PMOD board.
 //      VGA_HSYNC -
 //      VGA_VSYNC -
-//      UART_TXD_IN -   UART signal FROM USB/UART chip.  Characters received
-//                      are turned into PET keystrokes.  9600 baud.
+//		AUDIO -			CB2 audio connected to JC[1].
+//		CASS_WR -		Cassette write output connected to JC[3].
+//		CASS_RD -		Cassette read input connected to JC[4].
+//      PS2_CLK -		PS/2 clock connected to JD[7].
+//      PS2_DATA -		PS/2 data connected to JD[9].
 //
 //
 // Copyright (c) 2015 Thomas Skibo.
@@ -60,6 +59,8 @@ module Pet2001_Arty(
             output reg   LED,
 
             output       AUDIO,
+            output       CASS_WR,
+            input        CASS_RD,
 
 `ifdef PET_COMP
             output [1:0] COMPVID,
@@ -71,8 +72,8 @@ module Pet2001_Arty(
             output       VGA_VSYNC,
 `endif
 
-            input        UART_TXD_IN,
-            output       UART_RXD_OUT,
+            input        PS2_CLK,
+            input        PS2_DATA,
 
             input        CLK
         );
@@ -122,9 +123,29 @@ module Pet2001_Arty(
 
     /////////////////////////////////////////////////////////////////////
 
-    wire diag_l = ~SW[2];
-    wire clk_speed = SW[1];
-    wire clk_stop = SW[0];
+    // Synchronize inputs
+    reg        cass_rd_1;
+    reg        cass_rd_2;
+    reg        sw0_1;
+    reg        sw0_2;
+    reg        sw1_1;
+    reg        sw1_2;
+    reg        sw2_1;
+    reg        sw2_2;
+    always @(posedge clk) begin
+        cass_rd_1 <= CASS_RD;
+        cass_rd_2 <= cass_rd_1;
+        sw0_1 <= SW[0];
+        sw0_2 <= sw0_1;
+        sw1_1 <= SW[1];
+        sw1_2 <= sw1_1;
+        sw2_1 <= SW[2];
+        sw2_2 <= sw2_1;
+    end
+
+    wire diag_l = ~sw2_2;
+    wire clk_speed = sw1_2;
+    wire clk_stop = sw0_2;
     wire [3:0] keyrow;
     wire [7:0] keyin;
 
@@ -144,9 +165,9 @@ module Pet2001_Arty(
                 .keyin(keyin),
 
                 .cass_motor_n(),
-                .cass_write(),
-                .cass_sense_n(1'b1),
-                .cass_read(1'b1),
+                .cass_write(CASS_WR),
+                .cass_sense_n(1'b0),
+                .cass_read(cass_rd_2),
 
                 .audio(AUDIO),
 
@@ -159,32 +180,12 @@ module Pet2001_Arty(
                 .reset(reset)
         );
 
-    assign UART_RXD_OUT = UART_TXD_IN; // echo back serial data
-
-    wire [7:0] uart_data;
-    wire       uart_strobe;
-
-    uart #(.CLK_DIVIDER(5208))
-       uart0(.serial_out(),
-             .serial_in(UART_TXD_IN),
-
-             .write_rdy(), // unused xmit interface
-             .write_data(8'h00),
-             .write_strobe(1'b0),
-
-             .read_data(uart_data),
-             .read_strobe(uart_strobe),
-
-             .clk(clk),
-             .reset(reset)
-       );
-
-    pet2001uart_keys
+    pet2001ps2_key
         petkeys(.keyrow(keyrow),
                 .keyin(keyin),
 
-                .uart_data(uart_data),
-                .uart_strobe(uart_strobe),
+                .ps2_clk(PS2_CLK),
+                .ps2_data(PS2_DATA),
 
                 .clk(clk),
                 .reset(reset)
