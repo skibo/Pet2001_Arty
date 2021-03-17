@@ -84,7 +84,7 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
     wire        pia1_irq;
     wire [7:0]  pia1_porta_out;
     wire [7:0]  pia1_porta_in = {diag_l, 2'b00, cass_sense_n, 4'b0000};
-    wire        pia1_ca1_in = !cass_read;
+    wire        pia1_ca1_in = cass_read;
     wire        pia1_ca2_out;
 
     pia6520 pia1(.data_out(pia1_data_out),
