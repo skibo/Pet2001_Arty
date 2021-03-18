@@ -84,34 +84,34 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
 `endif
 
     always @(posedge clk)
-    if (reset || next_line)
-        h_counter <= 10'd0;
-    else if (clk_div)
-        h_counter <= h_counter + 1'b1;
+        if (reset || next_line)
+            h_counter <= 10'd0;
+        else if (clk_div)
+            h_counter <= h_counter + 1'b1;
 
     assign next_line = (h_counter == 10'd799) && clk_div;
 
 
     always @(posedge clk)
-    if (reset || next_screen)
-        v_counter <= 10'd0;
-    else if (next_line)
-        v_counter <= v_counter + 1'b1;
+        if (reset || next_screen)
+            v_counter <= 10'd0;
+        else if (next_line)
+            v_counter <= v_counter + 1'b1;
 
     assign next_screen = (v_counter == 10'd524) && next_line;
 
 
     always @(posedge clk)
-    if (reset)
-        vga_hsync <= 1;
-    else if (clk_div)
-        vga_hsync <= (h_counter >= 10'd96);
+        if (reset)
+            vga_hsync <= 1;
+        else if (clk_div)
+            vga_hsync <= (h_counter >= 10'd96);
 
     always @(posedge clk)
-    if (reset)
-        vga_vsync <= 1;
-    else if (clk_div)
-        vga_vsync <= (v_counter >= 10'd2);
+        if (reset)
+            vga_vsync <= 1;
+        else if (clk_div)
+            vga_vsync <= (v_counter >= 10'd2);
 
     ////////// Pet 320x200 display within 800x480 VGA (pixels doubled) ////////
     //
@@ -122,30 +122,30 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
 
     // "window" within display
     parameter [9:0]
-        PET_WINDOW_TOP =    10'd74,		// back porch + sync + 39
+        PET_WINDOW_TOP =    10'd74,     // back porch + sync + 39
         PET_WINDOW_LEFT =   10'd127,    // mod 8 must be 7.
         PET_WINDOW_BOTTOM = PET_WINDOW_TOP + 10'd400,
         PET_WINDOW_RIGHT =  PET_WINDOW_LEFT + 10'd640;
 
     always @(posedge clk)
-    if (clk_div) begin
-        is_pet_row <= (v_counter >= PET_WINDOW_TOP &&
-                       v_counter < PET_WINDOW_BOTTOM);
-        is_pet_col <= (h_counter >= PET_WINDOW_LEFT &&
-                       h_counter < PET_WINDOW_RIGHT);
-    end
+        if (clk_div) begin
+            is_pet_row <= (v_counter >= PET_WINDOW_TOP &&
+                           v_counter < PET_WINDOW_BOTTOM);
+            is_pet_col <= (h_counter >= PET_WINDOW_LEFT &&
+                           h_counter < PET_WINDOW_RIGHT);
+        end
 
     always @(posedge clk)
-    if (reset || next_screen)
-        pixel_ybit <= 3'd0;
-    else if (is_pet_row && next_line && v_counter[0] && clk_div)
-        pixel_ybit <= pixel_ybit + 1'b1;
+        if (reset || next_screen)
+            pixel_ybit <= 3'd0;
+        else if (is_pet_row && next_line && v_counter[0] && clk_div)
+            pixel_ybit <= pixel_ybit + 1'b1;
 
     always @(posedge clk)
-    if (reset || next_line)
-        pixel_xbit <= 3'd0;
-    else if (h_counter[0] && clk_div)
-        pixel_xbit <= pixel_xbit + 1'b1;
+        if (reset || next_line)
+            pixel_xbit <= 3'd0;
+        else if (h_counter[0] && clk_div)
+            pixel_xbit <= pixel_xbit + 1'b1;
 
     // This signal is used to generate 60hz interrupts and was used on
     // original PET to avoid "snow" on the display by preventing simultaneous
@@ -167,11 +167,11 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     // Keeps the video address of the current character.  Scans through
     // each row 8 times before video_row_addr is incremented.
     always @(posedge clk)
-    if (reset || (next_line && clk_div))
-        video_addr <= video_row_addr;
-    else if (is_pet_row && is_pet_col && pixel_xbit == 3'd6 &&
-             h_counter[0] && clk_div)
-        video_addr <= video_addr + 1'b1;
+        if (reset || (next_line && clk_div))
+            video_addr <= video_row_addr;
+        else if (is_pet_row && is_pet_col && pixel_xbit == 3'd6 &&
+                 h_counter[0] && clk_div)
+            video_addr <= video_addr + 1'b1;
 
     // Generate an address into the character ROM.
     always @(posedge clk)
@@ -180,12 +180,12 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     // Shift register is loaded with character ROM data and spit out to screen.
     reg [7:0]   chardata_r;
     always @(posedge clk)
-    if (clk_div && h_counter[0]) begin
-        if (pixel_xbit == 3'd7)
-            chardata_r <= chardata;
-        else
-            chardata_r <= {chardata_r[6:0], 1'b0};
-    end
+        if (clk_div && h_counter[0]) begin
+            if (pixel_xbit == 3'd7)
+                chardata_r <= chardata;
+            else
+                chardata_r <= {chardata_r[6:0], 1'b0};
+        end
 
     // Is current character reverse video?
     reg char_invert;
