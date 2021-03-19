@@ -19,11 +19,11 @@
 //      VGA_B[3:0] -    interface to Digilent's PmodVGA PMOD board.
 //      VGA_HSYNC -
 //      VGA_VSYNC -
-//		AUDIO -			CB2 audio connected to JC[1].
-//		CASS_WR -		Cassette write output connected to JC[3].
-//		CASS_RD -		Cassette read input connected to JC[4].
-//      PS2_CLK -		PS/2 clock connected to JD[7].
-//      PS2_DATA -		PS/2 data connected to JD[9].
+//      AUDIO -         CB2 audio connected to JC[1].
+//      CASS_WR -       Cassette write output connected to JC[3].
+//      CASS_RD -       Cassette read input connected to JC[4].
+//      PS2_CLK -       PS/2 clock connected to JD[7].
+//      PS2_DATA -      PS/2 data connected to JD[9].
 //
 //
 // Copyright (c) 2015 Thomas Skibo.

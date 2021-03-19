@@ -32,7 +32,7 @@ module testPet2001_Arty;
     reg        UART_TXD_IN;
     wire       UART_RXD_OUT;
  `else
-    reg		   PS2_CLK;
+    reg        PS2_CLK;
     reg        PS2_DATA;
  `endif // !PET_UART
 `endif // !PET_REAL
