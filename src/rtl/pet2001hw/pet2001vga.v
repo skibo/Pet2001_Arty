@@ -65,23 +65,27 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     reg [9:0]   v_counter;
     wire        next_line;
     wire        next_screen;
-    reg [1:0]   clk_div_cnt;
-    wire        clk_div;
+    reg         clk_div;
 
-    // Divide clk by 4 or 2.
+    // VGA 640x480 @ 60Hz
+    parameter [9:0]
+        H_ACTIVE =      10'd640,
+        H_FRONT_PORCH = 10'd16,
+        H_SYNC =        10'd96,
+        H_BACK_PORCH =  10'd48,
+        H_TOTAL = H_ACTIVE + H_FRONT_PORCH + H_SYNC + H_BACK_PORCH,
+        V_ACTIVE =      10'd480,
+        V_FRONT_PORCH = 10'd10,
+        V_SYNC =        10'd2,
+        V_BACK_PORCH =  10'd33,
+        V_TOTAL = V_ACTIVE + V_FRONT_PORCH + V_SYNC + V_BACK_PORCH;
+
+    // Divide clk by 2 to get 25Mhz pixel "clock"
     always @(posedge clk)
         if (reset)
-            clk_div_cnt <= 2'b00;
+            clk_div <= 1'b0;
         else
-            clk_div_cnt <= clk_div_cnt + 1'b1;
-
-`ifdef CLK100MHZ
-    assign clk_div = (clk_div_cnt == 2'b11);
-`elsif CLK25MHZ
-    assign clk_div = 1'b1;
-`else
-    assign clk_div = clk_div_cnt[1];
-`endif
+            clk_div <= ~clk_div;
 
     always @(posedge clk)
         if (reset || next_line)
@@ -89,7 +93,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
         else if (clk_div)
             h_counter <= h_counter + 1'b1;
 
-    assign next_line = (h_counter == 10'd799) && clk_div;
+    assign next_line = (h_counter == H_TOTAL - 1'b1) && clk_div;
 
 
     always @(posedge clk)
@@ -98,32 +102,38 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
         else if (next_line)
             v_counter <= v_counter + 1'b1;
 
-    assign next_screen = (v_counter == 10'd524) && next_line;
+    assign next_screen = (v_counter == V_TOTAL - 1'b1) && next_line;
 
-
+    // Generate vsync and hsync signals.  hsync is delayed one clock so it
+    // lines up correctly with the video data which is also registered.
+    reg         vga_hsync_p;
     always @(posedge clk)
         if (reset)
-            vga_hsync <= 1;
+            vga_hsync_p <= 1;
         else if (clk_div)
-            vga_hsync <= (h_counter >= 10'd96);
+            vga_hsync_p <= !(h_counter < H_SYNC);
+
+    always @(posedge clk)
+        vga_hsync <= vga_hsync_p;
 
     always @(posedge clk)
         if (reset)
             vga_vsync <= 1;
         else if (clk_div)
-            vga_vsync <= (v_counter >= 10'd2);
+            vga_vsync <= !(v_counter < V_SYNC);
 
-    ////////// Pet 320x200 display within 800x480 VGA (pixels doubled) ////////
+    ////////// Pet 320x200 display in 640x480 VGA (pixels doubled) ////////
     //
     reg [2:0]   pixel_xbit;     // 0-7: video bit within byte
     reg [2:0]   pixel_ybit;     // 0-7: row within char
     reg         is_pet_row;     // is a row in pet video region
     reg         is_pet_col;     // is a column in pet video region
+    wire        pet_active = is_pet_row && is_pet_col;
 
     // "window" within display
     parameter [9:0]
-        PET_WINDOW_TOP =    10'd74,     // back porch + sync + 39
-        PET_WINDOW_LEFT =   10'd127,    // mod 8 must be 7.
+        PET_WINDOW_TOP =    V_SYNC + V_BACK_PORCH + 10'd40,
+        PET_WINDOW_LEFT =   H_SYNC + H_BACK_PORCH,
         PET_WINDOW_BOTTOM = PET_WINDOW_TOP + 10'd400,
         PET_WINDOW_RIGHT =  PET_WINDOW_LEFT + 10'd640;
 
@@ -138,13 +148,13 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     always @(posedge clk)
         if (reset || next_screen)
             pixel_ybit <= 3'd0;
-        else if (is_pet_row && next_line && v_counter[0] && clk_div)
+        else if (is_pet_row && next_line && !v_counter[0] && clk_div)
             pixel_ybit <= pixel_ybit + 1'b1;
 
     always @(posedge clk)
         if (reset || next_line)
-            pixel_xbit <= 3'd0;
-        else if (h_counter[0] && clk_div)
+            pixel_xbit <= 3'd7;
+        else if (!h_counter[0] && clk_div)
             pixel_xbit <= pixel_xbit + 1'b1;
 
     // This signal is used to generate 60hz interrupts and was used on
@@ -160,7 +170,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     always @(posedge clk)
     if (reset || next_screen)
         video_row_addr <= 10'd0;
-    else if (is_pet_row && next_line && !v_counter[0] &&
+    else if (is_pet_row && next_line && v_counter[0] &&
              pixel_ybit == 3'b111 && clk_div)
         video_row_addr <= video_row_addr + 6'd40;
 
@@ -169,8 +179,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     always @(posedge clk)
         if (reset || (next_line && clk_div))
             video_addr <= video_row_addr;
-        else if (is_pet_row && is_pet_col && pixel_xbit == 3'd6 &&
-                 h_counter[0] && clk_div)
+        else if (pet_active && pixel_xbit == 3'd6 && !h_counter[0] && clk_div)
             video_addr <= video_addr + 1'b1;
 
     // Generate an address into the character ROM.
@@ -180,7 +189,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     // Shift register is loaded with character ROM data and spit out to screen.
     reg [7:0]   chardata_r;
     always @(posedge clk)
-        if (clk_div && h_counter[0]) begin
+        if (clk_div && !h_counter[0]) begin
             if (pixel_xbit == 3'd7)
                 chardata_r <= chardata;
             else
@@ -190,7 +199,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     // Is current character reverse video?
     reg char_invert;
     always @(posedge clk)
-        if (clk_div && h_counter[0] && pixel_xbit == 3'd7)
+        if (clk_div && !h_counter[0] && pixel_xbit == 3'd7)
             char_invert <= video_data[7];
 
     //////////////////////////////// Video Logic ////////////////////////////
@@ -199,9 +208,9 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     wire [3:0] petvideo = {4{pixel}};
 
     always @(posedge clk) begin
-        vga_r <= (is_pet_row && is_pet_col) ? petvideo : 4'b0000;
-        vga_g <= (is_pet_row && is_pet_col) ? petvideo : 4'b0000;
-        vga_b <= (is_pet_row && is_pet_col) ? petvideo : 4'b0000;
+        vga_r <= pet_active ? petvideo : 4'b0000;
+        vga_g <= pet_active ? petvideo : 4'b0000;
+        vga_b <= pet_active ? petvideo : 4'b0000;
     end
 
 endmodule // pet2001vga
