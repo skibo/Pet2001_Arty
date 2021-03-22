@@ -44,7 +44,7 @@
 #    "src/rtl/roms/pet2001_rom2.mem"
 #    "src/constrs/Pet2001_Arty.xdc"
 #    "src/sim/simtop.v"
-#    "src/sim/sim_petkeys.v"
+#    "src/sim/test_pet2001ps2_key.v"
 #    "src/sim/test_cpu6502.v"
 #    "src/sim/test_via6522.v"
 #    "src/sim/test_pia6520.v"
@@ -213,7 +213,7 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 set obj [get_filesets sim_1]
 set files [list \
  [file normalize "${origin_dir}/src/sim/simtop.v"] \
- [file normalize "${origin_dir}/src/sim/sim_petkeys.v"] \
+ [file normalize "${origin_dir}/src/sim/test_pet2001ps2_key.v"] \
  [file normalize "${origin_dir}/src/sim/test_cpu6502.v"] \
  [file normalize "${origin_dir}/src/sim/test_via6522.v"] \
  [file normalize "${origin_dir}/src/sim/test_pia6520.v"] \
