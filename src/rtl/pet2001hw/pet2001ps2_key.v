@@ -230,34 +230,26 @@ module pet2001ps2_key(output reg [7:0] keyin,
 
     ////////////////// Pet 2001 Matrix little RAM ///////////////////////////
 
-    // Build a 16x8 memory from LUTs.  It will store the current state
-    // of the PET keyboard.  A 4-bit counter clears out the state at
-    // reset.
+    // Build a 16x8 dual port memory to store the current state of the PET
+    // keyboard.  A 4-bit counter clears out the state at  reset.
     //
-    wire [7:0]  keymx_o;
+    wire [3:0]  keymx_ra;
+    wire [7:0]  keymx_rd;
     wire [7:0]  keymx_we;
-    wire [3:0]  keymx_a;
-    wire        keymx_d;
+    wire [3:0]  keymx_wa;
+    wire        keymx_wd;
+
+    reg [7:0]   keymx_mem[15:0];
+
+    integer     i;
+    assign keymx_rd = keymx_mem[keymx_ra];
+    always @(posedge clk)
+        for (i = 0; i < 8; i = i + 1)
+            if (keymx_we[i])
+                keymx_mem[keymx_wa][i] <= keymx_wd;
 
     reg         keymx_rst;      // Doing reset sequence.
     reg [3:0]   keymx_rst_a;    // Write address during reset sequence.
-
-    genvar x;
-    generate
-    for (x=0; x<8; x=x+1) begin:bit
-        RAM32X1S
-            keymatrix(.O(keymx_o[x]),
-              .A0(keymx_a[0]),
-              .A1(keymx_a[1]),
-              .A2(keymx_a[2]),
-              .A3(keymx_a[3]),
-              .A4(1'b0),
-              .D(keymx_d),
-              .WE(keymx_we[x]),
-              .WCLK(clk)
-          );
-    end
-    endgenerate
 
     // Do reset sequence.
     always @(posedge clk)
@@ -275,14 +267,6 @@ module pet2001ps2_key(output reg [7:0] keyin,
 
 
     ////////////////////// Write translated codes into RAM ////////////////
-
-    // RAM isn't dual port so share address pins by even/odd clocks.
-    reg     oddclock;
-    always @(posedge clk)
-        if (reset)
-            oddclock <= 1'b0;
-        else
-            oddclock <= ~oddclock;
 
     reg [7:0] ps2_code_r;
     reg       key_release_r;
@@ -318,22 +302,18 @@ module pet2001ps2_key(output reg [7:0] keyin,
     always @(posedge clk)
         if (reset)
             do_keymx_wr <= 1'b0;
-        else if (do_keymx_wr_nxt)
-            do_keymx_wr <= 1'b1;
-        else if (!oddclock)
-            do_keymx_wr <= 1'b0;
+        else
+            do_keymx_wr <= do_keymx_wr_nxt;
 
-    // Write RAM on even clocks. (keymx_rst is reset sequence.)
-    assign keymx_a = keymx_rst ? keymx_rst_a :
-                     (oddclock ? keyrow : pet_row);
+    // Write RAM.  (keymx_rst is reset sequence.)
+    assign keymx_wa = keymx_rst ? keymx_rst_a : pet_row;
     assign keymx_we = keymx_rst ? 8'hFF :
-                      ((do_keymx_wr && !oddclock) ?
-                       (8'h01 << pet_column) : 8'h00);
-    assign keymx_d = keymx_rst || key_release_r;
+                      (do_keymx_wr ? (8'h01 << pet_column) : 8'h00);
+    assign keymx_wd = keymx_rst || key_release_r;
 
-    // Read RAM on odd clocks.
+    // Read keystate from RAM.
+    assign keymx_ra = keyrow;
     always @(posedge clk)
-        if (oddclock)
-            keyin <= keymx_o;
+        keyin <= keymx_rd;
 
 endmodule // pet2001ps2_key
