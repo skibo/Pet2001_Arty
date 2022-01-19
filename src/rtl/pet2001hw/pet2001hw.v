@@ -244,11 +244,12 @@ module pet2001hw(
     ////////////////////////////////////////////////////////
     wire [7:0]  io_read_data;
     wire        io_we = we && (addr[15:11] == 5'b1110_1);
+    wire        io_rdy = rdy && (addr[15:11] == 5'b1110_1);
 
     pet2001io io(.data_out(io_read_data),
                  .data_in(data_in),
                  .addr(addr[10:0]),
-                 .rdy(rdy),
+                 .rdy(io_rdy),
                  .we(io_we),
 
                  .irq(irq),
