@@ -27,27 +27,27 @@
 #
 # 3. The following remote source files that were added to the original project:-
 #
-#    "src/rtl/cpu6502/cpu6502.v"
-#    "src/rtl/pet2001_top.v"
-#    "src/rtl/pet2001hw/pet2001hw.v"
-#    "src/rtl/pet2001hw/pet2001io.v"
-#    "src/rtl/pet2001hw/pet2001ps2_key.v"
-#    "src/rtl/pet2001hw/pet2001ram.v"
-#    "src/rtl/pet2001hw/pet2001roms.v"
-#    "src/rtl/pet2001hw/pet2001vga.v"
-#    "src/rtl/pet2001hw/pet2001vidram.v"
-#    "src/rtl/pet2001hw/pia6520.v"
-#    "src/rtl/misc/ps2_intf.v"
-#    "src/rtl/pet2001hw/via6522.v"
-#    "src/rtl/Pet2001_Arty.v"
-#    "src/rtl/roms/pet2001_rom1.mem"
-#    "src/rtl/roms/pet2001_rom2.mem"
-#    "src/constrs/Pet2001_Arty.xdc"
-#    "src/sim/simtop.v"
-#    "src/sim/test_pet2001ps2_key.v"
-#    "src/sim/test_cpu6502.v"
-#    "src/sim/test_via6522.v"
-#    "src/sim/test_pia6520.v"
+#    "Pet2001_Arty.srcs/source_1/cpu6502/cpu6502.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001_top.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001io.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001ps2_key.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001ram.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001roms.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001vga.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pet2001vidram.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/pia6520.v"
+#    "Pet2001_Arty.srcs/source_1/misc/ps2_intf.v"
+#    "Pet2001_Arty.srcs/source_1/pet2001hw/via6522.v"
+#    "Pet2001_Arty.srcs/source_1/Pet2001_Arty.v"
+#    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"
+#    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"
+#    "Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc"
+#    "Pet2001_Arty.srcs/sim_1/simtop.v"
+#    "Pet2001_Arty.srcs/sim_1/test_pet2001ps2_key.v"
+#    "Pet2001_Arty.srcs/sim_1/test_cpu6502.v"
+#    "Pet2001_Arty.srcs/sim_1/test_via6522.v"
+#    "Pet2001_Arty.srcs/sim_1/test_pia6520.v"
 #
 #*****************************************************************************************
 
@@ -126,7 +126,7 @@ set proj_dir [get_property directory [current_project]]
 
 # Set project properties
 set obj [current_project]
-set_property -name "board_part_repo_paths" -value "[file normalize "~/.Xilinx/Vivado/2021.2/xhub/board_store/xilinx_board_store"] [file normalize "$origin_dir/../.Xilinx/Vivado/2020.2/xhub/board_store/xilinx_board_store"]" -objects $obj
+set_property -name "board_part_repo_paths" -value "[file normalize "~/.Xilinx/Vivado/[version -short]/xhub/board_store/xilinx_board_store"]" -objects $obj
 set_property -name "board_part" -value "digilentinc.com:arty:part0:1.1" -objects $obj
 set_property -name "default_lib" -value "xil_defaultlib" -objects $obj
 set_property -name "enable_vhdl_2008" -value "1" -objects $obj
@@ -148,31 +148,31 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- [file normalize "${origin_dir}/src/rtl/cpu6502/cpu6502.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001_top.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001hw.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001io.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001ps2_key.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001ram.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001roms.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001vga.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pet2001vidram.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/pia6520.v"] \
- [file normalize "${origin_dir}/src/rtl/misc/ps2_intf.v"] \
- [file normalize "${origin_dir}/src/rtl/pet2001hw/via6522.v"] \
- [file normalize "${origin_dir}/src/rtl/Pet2001_Arty.v"] \
- [file normalize "${origin_dir}/src/rtl/roms/pet2001_rom1.mem"] \
- [file normalize "${origin_dir}/src/rtl/roms/pet2001_rom2.mem"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/cpu6502/cpu6502.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001_top.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001io.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001ps2_key.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001ram.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001roms.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001vga.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001vidram.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/pia6520.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/misc/ps2_intf.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/via6522.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"] \
 ]
 add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for remote files
-set file "$origin_dir/src/rtl/roms/pet2001_rom1.mem"
+set file "$origin_dir/Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "Memory File" -objects $file_obj
 
-set file "$origin_dir/src/rtl/roms/pet2001_rom2.mem"
+set file "$origin_dir/Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets sources_1] [list "*$file"]]
 set_property -name "file_type" -value "Memory File" -objects $file_obj
@@ -195,9 +195,9 @@ if {[string equal [get_filesets -quiet constrs_1] ""]} {
 set obj [get_filesets constrs_1]
 
 # Add/Import constrs file and set constrs file properties
-set file "[file normalize "$origin_dir/src/constrs/Pet2001_Arty.xdc"]"
+set file "[file normalize "$origin_dir/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc"]"
 set file_added [add_files -norecurse -fileset $obj [list $file]]
-set file "$origin_dir/src/constrs/Pet2001_Arty.xdc"
+set file "$origin_dir/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc"
 set file [file normalize $file]
 set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
 set_property -name "file_type" -value "XDC" -objects $file_obj
@@ -213,11 +213,11 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 # Set 'sim_1' fileset object
 set obj [get_filesets sim_1]
 set files [list \
- [file normalize "${origin_dir}/src/sim/simtop.v"] \
- [file normalize "${origin_dir}/src/sim/test_pet2001ps2_key.v"] \
- [file normalize "${origin_dir}/src/sim/test_cpu6502.v"] \
- [file normalize "${origin_dir}/src/sim/test_via6522.v"] \
- [file normalize "${origin_dir}/src/sim/test_pia6520.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/simtop.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_pet2001ps2_key.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_cpu6502.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_via6522.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_pia6520.v"] \
 ]
 add_files -norecurse -fileset $obj $files
 

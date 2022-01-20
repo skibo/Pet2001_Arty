@@ -1,7 +1,7 @@
 
 Pet2001_Arty
 ------------
-November, 2015  Updated: Mar, 2021.
+November, 2015  Updated: Jan, 2022
 
 A Commodore PET in an Artix-7 FPGA.
 
@@ -40,10 +40,6 @@ With the previous UART to keyboard conversion, I could not play games
 because there was no way to know how long a key is held.  A PS/2 keyboard
 interface needs to be hooked up to PMOD JD.  Also, cassette input and
 output is sent to PMOD JC as well as CB2 sound.
-
-NOTE:  this project was originally an ISE project before I moved
-it over to Vivado.  That is why the directory structure is odd to anyone
-used to Vivado.
 
 Let me know if you have any trouble.
 
