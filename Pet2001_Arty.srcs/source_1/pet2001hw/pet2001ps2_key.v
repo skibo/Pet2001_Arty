@@ -76,35 +76,35 @@ module pet2001ps2_key(output reg [7:0] keyin,
     reg         key_extended;   // set by an 0xE0 code. not used.
     reg         key_shift;      // shift key is down
 
-`define PS2_RELEASE 8'hf0
-`define PS2_EXTENDED    8'he0
-`define PS2_SHIFT1  8'h59
-`define PS2_SHIFT2  8'h12
-`define PS2_ALT     8'h11
-`define PS2_CTRL    8'h14
-
+    localparam [7:0]
+        PS2_RELEASE =   8'hf0,
+        PS2_EXTENDED =  8'he0,
+        PS2_SHIFT1 =    8'h59,
+        PS2_SHIFT2 =    8'h12,
+        PS2_ALT =       8'h11,
+        PS2_CTRL =      8'h14;
 
     // Flag "extended" keys (not used at the moment)
     always @(posedge clk)
-        if (reset || (ps2_wr && ps2_code != `PS2_EXTENDED &&
-                      ps2_code != `PS2_RELEASE))
+        if (reset || (ps2_wr && ps2_code != PS2_EXTENDED &&
+                      ps2_code != PS2_RELEASE))
             key_extended <= 1'b0;
-        else if (ps2_wr && ps2_code == `PS2_EXTENDED)
+        else if (ps2_wr && ps2_code == PS2_EXTENDED)
             key_extended <= 1'b1;
 
     // Next code is a key release.
     always @(posedge clk)
-        if (reset || (ps2_wr && ps2_code != `PS2_RELEASE))
+        if (reset || (ps2_wr && ps2_code != PS2_RELEASE))
             key_release <= 1'b0;
-        else if (ps2_wr && ps2_code == `PS2_RELEASE)
+        else if (ps2_wr && ps2_code == PS2_RELEASE)
             key_release <= 1'b1;
 
     // Look for SHIFT key(s)
     always @(posedge clk)
         if (reset)
             key_shift <= 1'b0;
-        else if (ps2_wr && (ps2_code == `PS2_SHIFT1 ||
-                            ps2_code == `PS2_SHIFT2))
+        else if (ps2_wr && (ps2_code == PS2_SHIFT1 ||
+                            ps2_code == PS2_SHIFT2))
             key_shift <= ! key_release;
 
 
@@ -280,10 +280,10 @@ module pet2001ps2_key(output reg [7:0] keyin,
         { pet_column, pet_row } <= ps2_to_pet(key_shift, ps2_code_r);
 
     // Exlude special codes and shift keys
-    wire      ps2_real_key = (ps2_code != `PS2_EXTENDED &&
-                              ps2_code != `PS2_RELEASE &&
-                              ps2_code != `PS2_SHIFT1 &&
-                              ps2_code != `PS2_SHIFT2);
+    wire      ps2_real_key = (ps2_code != PS2_EXTENDED &&
+                              ps2_code != PS2_RELEASE &&
+                              ps2_code != PS2_SHIFT1 &&
+                              ps2_code != PS2_SHIFT2);
     // Register code, release flag
     always @(posedge clk)
         if (ps2_wr) begin

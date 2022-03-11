@@ -1,19 +1,5 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:       Thomas Skibo
-//
-// Create Date:    22:28:56 08/21/2007
-// Modified:       Thu Dec 15 12:21:26 PST 2011
-//
-// Module Name:    cpu6502
-// Description:
-//
-//      Yet another 6502 implementation.  This is NOT a cycle accurate
-//      implementation of the 6502.
-//
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
 //
 // Copyright (C) 2007-2011, Thomas Skibo.  All rights reserved.
 //
@@ -52,9 +38,10 @@ module cpu6502(output reg [15:0]        addr,
                input                    clk
        );
 
-`define IRQ_VEC   16'hfffe
-`define RESET_VEC 16'hfffc
-`define NMI_VEC   16'hfffa
+    localparam [15:0]
+        IRQ_VEC =       16'hfffe,
+        RESET_VEC =     16'hfffc,
+        NMI_VEC =       16'hfffa;
 
     /////////////// CPU Regs ////////////////
     //
@@ -64,14 +51,16 @@ module cpu6502(output reg [15:0]        addr,
     reg [7:0]           y;              // y indexreg
     reg [7:0]           sp;             // stack pointer
     reg [7:0]           p;              // processor status
-`define P_N    7
-`define P_V    6
-`define P_1    5   // always one.
-`define P_B    4
-`define P_D    3
-`define P_I    2
-`define P_Z    1
-`define P_C    0
+
+    localparam          // processor status bits
+        P_N =  7,
+        P_V =  6,
+        P_1 =  5,       // always one.
+        P_B =  4,
+        P_D =  3,
+        P_I =  2,
+        P_Z =  1,
+        P_C =  0;
 
     reg [7:0]           instr;          // current instruction
     reg [7:0]           data_in_r;
@@ -320,10 +309,10 @@ module cpu6502(output reg [15:0]        addr,
                                   input [7:0] p);
         begin
             case (instr[7:6])
-                2'b00:   do_branch_func = (p[`P_N] == instr[5]);
-                2'b01:   do_branch_func = (p[`P_V] == instr[5]);
-                2'b10:   do_branch_func = (p[`P_C] == instr[5]);
-                2'b11:   do_branch_func = (p[`P_Z] == instr[5]);
+                2'b00:   do_branch_func = (p[P_N] == instr[5]);
+                2'b01:   do_branch_func = (p[P_V] == instr[5]);
+                2'b10:   do_branch_func = (p[P_C] == instr[5]);
+                2'b11:   do_branch_func = (p[P_Z] == instr[5]);
             endcase
         end
     endfunction
@@ -416,10 +405,10 @@ module cpu6502(output reg [15:0]        addr,
 
         case (cpu_sm)
             CPU_SM_RESET: begin
-                pc_nxt = `RESET_VEC;
+                pc_nxt = RESET_VEC;
                 sp_nxt = 8'hff;
                 p_nxt = 8'h24;
-                addr = `RESET_VEC;
+                addr = RESET_VEC;
                 if (rdy && !reset) begin
                     pc_nxt = pc_inc;
                     cpu_sm_nxt = CPU_SM_VECTOR1;
@@ -451,7 +440,7 @@ module cpu6502(output reg [15:0]        addr,
 
             // Decode opcode and execute many single byte instructions.
             CPU_SM_DECODE: begin
-                if (do_nmi || (irq_r && ! p[`P_I])) begin // IRQ, NMI?
+                if (do_nmi || (irq_r && ! p[P_I])) begin // IRQ, NMI?
                     pc_nxt = pc_dec;
                     cpu_sm_nxt = CPU_SM_INTR1;
                 end
@@ -462,7 +451,7 @@ module cpu6502(output reg [15:0]        addr,
                             addr = {8'h01, sp_inc};
                         else begin
                             addr = {8'h01, sp}; // PHP/PHA
-                            data_out = instr[6] ? acc : (p | (8'd1<<`P_B));
+                            data_out = instr[6] ? acc : (p | (8'd1<<P_B));
                             we = 1;
                         end
                     end
@@ -481,71 +470,71 @@ module cpu6502(output reg [15:0]        addr,
                             // Most one-byte instructions are handled here.
                             case (instr_type)
                                 INSTR_TYPE_TYA: begin
-                                    p_nxt[`P_Z] = (y == 8'h00);
-                                    p_nxt[`P_N] = y[7];
+                                    p_nxt[P_Z] = (y == 8'h00);
+                                    p_nxt[P_N] = y[7];
                                     acc_nxt = y;
                                 end
                                 INSTR_TYPE_TAY: begin
-                                    p_nxt[`P_Z] = (acc == 8'h00);
-                                    p_nxt[`P_N] = acc[7];
+                                    p_nxt[P_Z] = (acc == 8'h00);
+                                    p_nxt[P_N] = acc[7];
                                     y_nxt = acc;
                                 end
                                 INSTR_TYPE_TAX: begin
-                                    p_nxt[`P_Z] = (acc == 8'h00);
-                                    p_nxt[`P_N] = acc[7];
+                                    p_nxt[P_Z] = (acc == 8'h00);
+                                    p_nxt[P_N] = acc[7];
                                     x_nxt = acc;
                                 end
                                 INSTR_TYPE_TSX: begin
-                                    p_nxt[`P_Z] = (sp == 8'h00);
-                                    p_nxt[`P_N] = sp[7];
+                                    p_nxt[P_Z] = (sp == 8'h00);
+                                    p_nxt[P_N] = sp[7];
                                     x_nxt = sp;
                                 end
                                 INSTR_TYPE_DEX: begin
-                                    p_nxt[`P_Z] = (x == 8'h01);
-                                    p_nxt[`P_N] = (x == 8'h00 || (x[7] && x != 8'h80));
+                                    p_nxt[P_Z] = (x == 8'h01);
+                                    p_nxt[P_N] = (x == 8'h00 || (x[7] && x != 8'h80));
                                     x_nxt = x - 1'b1;
                                 end
                                 INSTR_TYPE_DEY: begin
-                                    p_nxt[`P_Z] = (y == 8'h01);
-                                    p_nxt[`P_N] = (y == 8'h00 || (y[7] && y != 8'h80));
+                                    p_nxt[P_Z] = (y == 8'h01);
+                                    p_nxt[P_N] = (y == 8'h00 || (y[7] && y != 8'h80));
                                     y_nxt = y - 1'b1;
                                 end
                                 INSTR_TYPE_TXA: begin
-                                    p_nxt[`P_Z] = (x == 8'h00);
-                                    p_nxt[`P_N] = x[7];
+                                    p_nxt[P_Z] = (x == 8'h00);
+                                    p_nxt[P_N] = x[7];
                                     acc_nxt = x;
                                 end
                                 INSTR_TYPE_TXS:
                                     sp_nxt = x;
                                 INSTR_TYPE_INCXY:
                                     if (instr[5]) begin
-                                        p_nxt[`P_Z] = (x == 8'hff);
-                                        p_nxt[`P_N] = (x == 8'h7f || (x[7] && x != 8'hff));
+                                        p_nxt[P_Z] = (x == 8'hff);
+                                        p_nxt[P_N] = (x == 8'h7f || (x[7] && x != 8'hff));
                                         x_nxt = x + 1'b1;
                                     end
                                     else begin
-                                        p_nxt[`P_Z] = (y == 8'hff);
-                                        p_nxt[`P_N] = (y == 8'h7f || (y[7] && y != 8'hff));
+                                        p_nxt[P_Z] = (y == 8'hff);
+                                        p_nxt[P_N] = (y == 8'h7f || (y[7] && y != 8'hff));
                                         y_nxt = y + 1'b1;
                                     end
                                 INSTR_TYPE_SCFLAGS:
                                     // Set or clear P flags.
                                     case (instr[7:6])
-                                        2'b00: p_nxt[`P_C] = instr[5];
-                                        2'b01: p_nxt[`P_I] = instr[5];
-                                        2'b10: p_nxt[`P_V] = 1'b0;
-                                        2'b11: p_nxt[`P_D] = instr[5];
+                                        2'b00: p_nxt[P_C] = instr[5];
+                                        2'b01: p_nxt[P_I] = instr[5];
+                                        2'b10: p_nxt[P_V] = 1'b0;
+                                        2'b11: p_nxt[P_D] = instr[5];
                                     endcase
                                 INSTR_TYPE_SHIFT: begin
                                     case (instr[6:5])
-                                        2'b00:  {p_nxt[`P_C], acc_nxt} = {acc, 1'b0};   // ASL
-                                        2'b01:  {p_nxt[`P_C], acc_nxt} = {acc, p[`P_C]};// ROL
-                                        2'b10:  {acc_nxt, p_nxt[`P_C]} = {1'b0, acc};   // LSR
-                                        2'b11:  {acc_nxt, p_nxt[`P_C]} = {p[`P_C], acc};// ROR
+                                        2'b00:  {p_nxt[P_C], acc_nxt} = {acc, 1'b0};   // ASL
+                                        2'b01:  {p_nxt[P_C], acc_nxt} = {acc, p[P_C]};// ROL
+                                        2'b10:  {acc_nxt, p_nxt[P_C]} = {1'b0, acc};   // LSR
+                                        2'b11:  {acc_nxt, p_nxt[P_C]} = {p[P_C], acc};// ROR
                                     endcase
 
-                                    p_nxt[`P_Z] = (acc_nxt == 8'h00);
-                                    p_nxt[`P_N] = acc_nxt[7];
+                                    p_nxt[P_Z] = (acc_nxt == 8'h00);
+                                    p_nxt[P_N] = acc_nxt[7];
                                 end
 
                                 INSTR_TYPE_PSHPUL:
@@ -567,14 +556,14 @@ module cpu6502(output reg [15:0]        addr,
                                 end
 
                                 INSTR_TYPE_BRK: begin
-                                    p_nxt[`P_B] = 1;
+                                    p_nxt[P_B] = 1;
                                     cpu_sm_nxt = CPU_SM_INTR1;
                                 end
 
                                 INSTR_TYPE_NOP: ;
                                 default: begin
 `ifdef brkundefined
-                                    p_nxt[`P_B] = 1;
+                                    p_nxt[P_B] = 1;
                                     cpu_sm_nxt = CPU_SM_INTR1;
 `endif
 `ifdef simulation
@@ -742,9 +731,9 @@ module cpu6502(output reg [15:0]        addr,
                         addr = {opaddr_h, opaddr_l};
                         case (instr[6:5])
                             2'b00:  data_out = {data_in_r[6:0], 1'b0};          // ASL
-                            2'b01:  data_out = {data_in_r[6:0], p[`P_C]};       // ROL
+                            2'b01:  data_out = {data_in_r[6:0], p[P_C]};       // ROL
                             2'b10:  data_out = {1'b0, data_in_r[7:1]};          // LSR
-                            2'b11:  data_out = {p[`P_C], data_in_r[7:1]};       // ROR
+                            2'b11:  data_out = {p[P_C], data_in_r[7:1]};       // ROR
                         endcase
                         we = 1;
                     end
@@ -771,38 +760,38 @@ module cpu6502(output reg [15:0]        addr,
                                 3'b001:  acc_nxt = acc & data_in_r;     // AND
                                 3'b010:  acc_nxt = acc ^ data_in_r;     // EOR
                                 3'b011: begin                           // ADC
-                                    if (p[`P_D]) begin:bcd_adc
+                                    if (p[P_D]) begin:bcd_adc
                                         reg [4:0] nyb_l;
                                         reg [4:0] nyb_h;
 
-                                        nyb_l = {1'b0, acc[3:0]} + data_in_r[3:0] + p[`P_C];
+                                        nyb_l = {1'b0, acc[3:0]} + data_in_r[3:0] + p[P_C];
                                         if (nyb_l > 5'd9)
                                             nyb_l = nyb_l + 5'd6;
                                         nyb_h = {1'b0, acc[7:4]} + data_in_r[7:4] + nyb_l[4];
                                         if (nyb_h > 5'd9)
                                             nyb_h = nyb_h + 5'd6;
                                         acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
-                                        p_nxt[`P_C] = nyb_h[4];
+                                        p_nxt[P_C] = nyb_h[4];
                                     end
                                     else
-                                        {p_nxt[`P_C], acc_nxt} = {1'b0, acc} + data_in_r + p[`P_C];
-                                    p_nxt[`P_V] = (acc[7] == data_in_r[7]) && (acc[7] != acc_nxt[7]);
+                                        {p_nxt[P_C], acc_nxt} = {1'b0, acc} + data_in_r + p[P_C];
+                                    p_nxt[P_V] = (acc[7] == data_in_r[7]) && (acc[7] != acc_nxt[7]);
                                 end
                                 3'b101:  acc_nxt = data_in_r;           // LDA
                                 3'b110: begin:cmp_blk                   // CMP
                                     reg [7:0] result;
                                     reg borrow;
                                     {borrow, result} = ({1'b0, acc} - data_in_r);
-                                    p_nxt[`P_C] = ~borrow;
-                                    p_nxt[`P_N] = result[7];
-                                    p_nxt[`P_Z] = (result == 8'h00);
+                                    p_nxt[P_C] = ~borrow;
+                                    p_nxt[P_N] = result[7];
+                                    p_nxt[P_Z] = (result == 8'h00);
                                 end
                                 3'b111: begin                           // SBC
-                                    if (p[`P_D]) begin:bcd_sbc
+                                    if (p[P_D]) begin:bcd_sbc
                                         reg [4:0] nyb_l;
                                         reg [4:0] nyb_h;
 
-                                        nyb_l = {1'b0, acc[3:0]} - data_in_r[3:0] - !p[`P_C];
+                                        nyb_l = {1'b0, acc[3:0]} - data_in_r[3:0] - !p[P_C];
                                         if (nyb_l[4])
                                             nyb_l = nyb_l - 5'd6;
                                         nyb_h = {1'b0, acc[7:4]} - data_in_r[7:4] - nyb_l[4];
@@ -810,20 +799,20 @@ module cpu6502(output reg [15:0]        addr,
                                             nyb_h = nyb_h - 5'd6;
 
                                         acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
-                                        p_nxt[`P_C] = ~nyb_h[4];
+                                        p_nxt[P_C] = ~nyb_h[4];
                                     end
                                     else begin:sbc
                                         reg borrow;
-                                        {borrow, acc_nxt} = {1'b0, acc} - data_in_r - !p[`P_C];
-                                        p_nxt[`P_C] = ~borrow;
+                                        {borrow, acc_nxt} = {1'b0, acc} - data_in_r - !p[P_C];
+                                        p_nxt[P_C] = ~borrow;
                                     end
-                                    p_nxt[`P_V] = (acc[7] != data_in_r[7]) && (acc[7] != acc_nxt[7]);
+                                    p_nxt[P_V] = (acc[7] != data_in_r[7]) && (acc[7] != acc_nxt[7]);
                                 end
                             endcase // case (instr_type)
 
                             if (instr[7:5] != 3'b110) begin // not CMP instruction
-                                p_nxt[`P_N] = acc_nxt[7];
-                                p_nxt[`P_Z] = (acc_nxt == 8'h00);
+                                p_nxt[P_N] = acc_nxt[7];
+                                p_nxt[P_Z] = (acc_nxt == 8'h00);
                             end
 
                             instr_nxt = data_in;
@@ -844,9 +833,9 @@ module cpu6502(output reg [15:0]        addr,
                         end
 
                         INSTR_TYPE_SHIFT: begin                     // RMW Shift instructions
-                            p_nxt[`P_C] = instr[6] ? data_in_r[0] : data_in_r[7];
-                            p_nxt[`P_Z] = (data_out == 8'h00);
-                            p_nxt[`P_N] = data_out[7];
+                            p_nxt[P_C] = instr[6] ? data_in_r[0] : data_in_r[7];
+                            p_nxt[P_Z] = (data_out == 8'h00);
+                            p_nxt[P_N] = data_out[7];
                             cpu_sm_nxt = CPU_SM_STORE;
                         end
 
@@ -855,8 +844,8 @@ module cpu6502(output reg [15:0]        addr,
                                 x_nxt = data_in_r;
                             else
                                 y_nxt = data_in_r;
-                            p_nxt[`P_N] = data_in_r[7];
-                            p_nxt[`P_Z] = (data_in_r == 8'h00);
+                            p_nxt[P_N] = data_in_r[7];
+                            p_nxt[P_Z] = (data_in_r == 8'h00);
 
                             instr_nxt = data_in;
                             pc_nxt = pc_inc;
@@ -865,14 +854,14 @@ module cpu6502(output reg [15:0]        addr,
 
                         INSTR_TYPE_CMPXY: begin                                         // CPX/CPY
                             if (instr[5]) begin
-                                p_nxt[`P_N] = (((x - data_in_r) & 8'h80) != 8'h00);
-                                p_nxt[`P_C] = (x >= data_in_r);
-                                p_nxt[`P_Z] = (x == data_in_r);
+                                p_nxt[P_N] = (((x - data_in_r) & 8'h80) != 8'h00);
+                                p_nxt[P_C] = (x >= data_in_r);
+                                p_nxt[P_Z] = (x == data_in_r);
                             end
                             else begin
-                                p_nxt[`P_N] = (((y - data_in_r) & 8'h80) != 8'h00);
-                                p_nxt[`P_C] = (y >= data_in_r);
-                                p_nxt[`P_Z] = (y == data_in_r);
+                                p_nxt[P_N] = (((y - data_in_r) & 8'h80) != 8'h00);
+                                p_nxt[P_C] = (y >= data_in_r);
+                                p_nxt[P_Z] = (y == data_in_r);
                             end
 
                             instr_nxt = data_in;
@@ -881,15 +870,15 @@ module cpu6502(output reg [15:0]        addr,
                         end
 
                         INSTR_TYPE_INCDEC: begin                // INC/DEC (read-modify-write)
-                            p_nxt[`P_N] = data_out[7];
-                            p_nxt[`P_Z] = (data_out == 8'h00);
+                            p_nxt[P_N] = data_out[7];
+                            p_nxt[P_Z] = (data_out == 8'h00);
                             cpu_sm_nxt = CPU_SM_STORE;
                         end
 
                         INSTR_TYPE_BIT: begin                   // BIT instructions
-                            p_nxt[`P_N] = data_in_r[7];
-                            p_nxt[`P_V] = data_in_r[6];
-                            p_nxt[`P_Z] = ((acc & data_in_r) == 8'h00);
+                            p_nxt[P_N] = data_in_r[7];
+                            p_nxt[P_V] = data_in_r[6];
+                            p_nxt[P_Z] = ((acc & data_in_r) == 8'h00);
 
                             instr_nxt = data_in;
                             pc_nxt = pc_inc;
@@ -911,13 +900,13 @@ module cpu6502(output reg [15:0]        addr,
                 if (rdy) begin
                     if (instr[6]) begin
                         acc_nxt = data_in_r;
-                        p_nxt[`P_N] = data_in_r[7];
-                        p_nxt[`P_Z] = (data_in_r == 8'h00);
+                        p_nxt[P_N] = data_in_r[7];
+                        p_nxt[P_Z] = (data_in_r == 8'h00);
                     end
                     else begin
                         p_nxt = data_in_r;
-                        p_nxt[`P_B] = 0;
-                        p_nxt[`P_1] = 1;
+                        p_nxt[P_B] = 0;
+                        p_nxt[P_1] = 1;
                     end
 
                     instr_nxt = data_in;
@@ -960,7 +949,7 @@ module cpu6502(output reg [15:0]        addr,
                 if (rdy) begin
                     sp_nxt = sp_inc;
                     p_nxt = data_in_r;
-                    p_nxt[`P_B] = 0;
+                    p_nxt[P_B] = 0;
                     cpu_sm_nxt = CPU_SM_RTS1;
                 end
             end
@@ -1014,16 +1003,16 @@ module cpu6502(output reg [15:0]        addr,
                 we = 1;
 
                 if (rdy) begin
-                    pc_nxt = (do_nmi ? `NMI_VEC : `IRQ_VEC);
+                    pc_nxt = (do_nmi ? NMI_VEC : IRQ_VEC);
                     sp_nxt = sp_dec;
                     cpu_sm_nxt = CPU_SM_INTR4;
                 end
             end
 
             CPU_SM_INTR4: begin
-                p_nxt[`P_I] = 1;
-                p_nxt[`P_B] = 0;
-                p_nxt[`P_D] = 0;  // like a 65C02!
+                p_nxt[P_I] = 1;
+                p_nxt[P_B] = 0;
+                p_nxt[P_D] = 0;  // like a 65C02!
 
                 if (rdy) begin
                     pc_nxt = pc_inc;
