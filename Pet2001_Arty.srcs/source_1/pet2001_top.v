@@ -40,19 +40,12 @@
 //////////////////////////////////////////////////////////////////////////////
 
 module pet2001_top(
-`ifdef PET_REAL
-                   output       petvid_data_n,
-                   output       petvid_horz_n,
-                   output       petvid_vert_n,
-`elsif PET_COMP
-                   output [1:0] vidout,
-`else
                    output [3:0] vga_r,
                    output [3:0] vga_g,
                    output [3:0] vga_b,
                    output       vga_hsync,
                    output       vga_vsync,
-`endif
+
                    output [3:0] keyrow,
                    input [7:0]  keyin,
 
@@ -104,19 +97,13 @@ module pet2001_top(
                  .rdy(rdy),
                  .nmi(nmi),
                  .irq(irq),
-`ifdef PET_REAL
-                 .petvid_data_n(petvid_data_n),
-                 .petvid_horz_n(petvid_horz_n),
-                 .petvid_vert_n(petvid_vert_n),
-`elsif PET_COMP
-                 .vidout(vidout),
-`else
+
                  .vga_r(vga_r),
                  .vga_g(vga_g),
                  .vga_b(vga_b),
                  .vga_hsync(vga_hsync),
                  .vga_vsync(vga_vsync),
-`endif
+
                  .keyin(keyin),
                  .keyrow(keyrow),
 

@@ -62,15 +62,11 @@ module Pet2001_Arty(
             output       CASS_WR,
             input        CASS_RD,
 
-`ifdef PET_COMP
-            output [1:0] COMPVID,
-`else
             output [3:0] VGA_R,
             output [3:0] VGA_G,
             output [3:0] VGA_B,
             output       VGA_HSYNC,
             output       VGA_VSYNC,
-`endif
 
             input        PS2_CLK,
             input        PS2_DATA,
@@ -151,15 +147,11 @@ module Pet2001_Arty(
 
     pet2001_top
         pet_top(
-`ifdef PET_COMP
-                .vidout(COMPVID),
-`else
                 .vga_r(VGA_R),
                 .vga_g(VGA_G),
                 .vga_b(VGA_B),
                 .vga_hsync(VGA_HSYNC),
                 .vga_vsync(VGA_VSYNC),
-`endif
 
                 .keyrow(keyrow),
                 .keyin(keyin),

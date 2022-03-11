@@ -1,7 +1,7 @@
 
 Pet2001_Arty
 ------------
-November, 2015  Updated: Jan, 2022
+November, 2015  Updated: Mar, 2022
 
 A Commodore PET in an Artix-7 FPGA.
 
@@ -30,10 +30,7 @@ remember this file location.)
 
 This project has been updated to use Digilent's PmodVGA PMOD board instead
 of composite video.  I have not updated the web page.  The PMOD board goes
-into PMOD's JA and JB.  The composite video version is available by
-adding a Verilog define of PET_COMP=1 (In Project Settings-->General-->
-Verilog Options-->Defines) and switching to the Pet2001_Arty_comp.xdc 
-constraints file.
+into PMOD's JA and JB.
 
 This project has been changed and now uses a PS/2 keyboard for input.
 With the previous UART to keyboard conversion, I could not play games
