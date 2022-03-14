@@ -31,13 +31,21 @@
 //
 // See https://github.com/Klaus2m5/6502_65C02_functional_tests
 //
-// From the repository, take the binary in bin_files/6502_function_test.bin
+// From the repository, take the binary in bin_files/6502_functional_test.bin
 // and convert it into a .mem file using:
 //
-// hexdump -v -e '/1 "%02X\n"' 6502_function_test.bin > 6502_function_test.mem
+// hexdump -v -e '/1 "%02X\n"' 6502_functional_test.bin \
+//    > 6502_functional_test.mem
 //
-// Be sure to add the .mem file to your project so Vivado can find it.  The
-// simulation time is about 75s (at 1Mhz).
+// Be sure to add the .mem file to your project so Vivado can find it.
+//
+// The simulation runs until it detects that the 6502 is in a tight infinite
+// loop which is what happens when the functional tests either detect a
+// problem or when the tests succeed.  You should download the listing file
+// from the same location as the binary so you can look up where the test
+// has stopped.
+//
+// The simulation time of a successful test is about 78s (at 1Mhz).
 //
 
 module test_cpu6502;
