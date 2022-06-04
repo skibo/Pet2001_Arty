@@ -68,7 +68,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     reg         clk_div;
 
     // VGA 640x480 @ 60Hz
-    parameter [9:0]
+    localparam [9:0]
         H_ACTIVE =      10'd640,
         H_FRONT_PORCH = 10'd16,
         H_SYNC =        10'd96,
@@ -131,7 +131,7 @@ module pet2001vga(output reg [3:0]  vga_r,      // VGA output
     wire        pet_active = is_pet_row && is_pet_col;
 
     // "window" within display
-    parameter [9:0]
+    localparam [9:0]
         PET_WINDOW_TOP =    V_SYNC + V_BACK_PORCH + 10'd40,
         PET_WINDOW_LEFT =   H_SYNC + H_BACK_PORCH,
         PET_WINDOW_BOTTOM = PET_WINDOW_TOP + 10'd400,

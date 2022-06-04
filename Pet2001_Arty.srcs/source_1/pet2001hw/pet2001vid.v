@@ -115,7 +115,7 @@ module pet2001vid(output reg        vid_n,      // Pet video interface
     reg         is_pet_col;     // is a column in pet video region
 
     // "window" within display
-    parameter [9:0]
+    localparam [9:0]
         PET_WINDOW_TOP =    9'd40,
         PET_WINDOW_LEFT =   9'd143,
         PET_WINDOW_BOTTOM = PET_WINDOW_TOP + 9'd200,

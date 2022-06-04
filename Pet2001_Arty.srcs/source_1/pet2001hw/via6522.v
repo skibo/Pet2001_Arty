@@ -73,7 +73,7 @@ module via6522(output reg [7:0] data_out,       // cpu interface
        );
 
     // Register address offsets
-    parameter [3:0]
+    localparam [3:0]
         ADDR_PORTB =            4'h0,
         ADDR_PORTA =            4'h1,
         ADDR_DDRB =             4'h2,

@@ -103,10 +103,10 @@ module pet2001ntsc(output reg [1:0]  vidout,            // Composite video out
     reg         is_pet_col;             // is a column in pet video region
 
     // "window" within display
-    parameter [9:0]
+    localparam [9:0]
         PET_WINDOW_LEFT =       10'd199,        // mod 8 must be 7.
         PET_WINDOW_RIGHT =      PET_WINDOW_LEFT + 10'd320;
-    parameter [8:0]
+    localparam [8:0]
         PET_WINDOW_TOP =        9'd20,
         PET_WINDOW_BOTTOM =     PET_WINDOW_TOP + 9'd200;
 

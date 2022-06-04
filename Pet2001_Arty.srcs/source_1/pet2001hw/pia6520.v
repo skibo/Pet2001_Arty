@@ -77,7 +77,7 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
     reg         irqb2;
 
     // Register address offsets
-    parameter [1:0]
+    localparam [1:0]
         ADDR_PORTA =    2'b00,
         ADDR_CRA =      2'b01,
         ADDR_PORTB =    2'b10,
