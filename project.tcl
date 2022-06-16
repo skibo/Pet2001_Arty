@@ -43,7 +43,7 @@
 #    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"
 #    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"
 #    "Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc"
-#    "Pet2001_Arty.srcs/sim_1/simtop.v"
+#    "Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v"
 #    "Pet2001_Arty.srcs/sim_1/test_pet2001ps2_key.v"
 #    "Pet2001_Arty.srcs/sim_1/test_cpu6502.v"
 #    "Pet2001_Arty.srcs/sim_1/test_via6522.v"
@@ -213,7 +213,7 @@ if {[string equal [get_filesets -quiet sim_1] ""]} {
 # Set 'sim_1' fileset object
 set obj [get_filesets sim_1]
 set files [list \
- [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/simtop.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_pet2001ps2_key.v"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_cpu6502.v"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/sim_1/test_via6522.v"] \
@@ -230,7 +230,7 @@ add_files -norecurse -fileset $obj $files
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
 set_property -name "hbs.configure_design_for_hier_access" -value "1" -objects $obj
-set_property -name "top" -value "testPet2001_Arty" -objects $obj
+set_property -name "top" -value "test_Pet2001_Arty" -objects $obj
 set_property -name "top_auto_set" -value "0" -objects $obj
 
 # Set 'utils_1' fileset object

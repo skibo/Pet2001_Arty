@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
 
 //
-// sim_petkeys.v
+// test_pet2001uart_keys.v
 //
 //      Simulate pet2001uart_keys block.
 //
 
-module testPetKeys;
+module test_pet2001uart_keys;
 
     reg [3:0]  keyrow;
     wire [7:0] keyin;
@@ -55,4 +55,4 @@ module testPetKeys;
                                         .reset(reset)
                               );
 
-endmodule // testPetKeys
+endmodule // test_pet2001uart_keys

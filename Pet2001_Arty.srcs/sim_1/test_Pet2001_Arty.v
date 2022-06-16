@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 //
-// simtop.v
+// test_Pet2001_Arty.v
 //
 //      Simulate top module for Pet2001_Arty and Pet2001Real_Arty.
 //
-module testPet2001_Arty;
+module test_Pet2001_Arty;
 
     reg [2:0]  SW;
     reg        BTN;
@@ -49,4 +49,4 @@ module testPet2001_Arty;
                      .CLK(CLK100)
                   );
 
-endmodule // testPet2001_Arty
+endmodule // test_Pet2001_Arty
