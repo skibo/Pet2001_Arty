@@ -67,34 +67,38 @@ module pet2001_top(
    // CPU
    ///////////////////////////////////////////////////
 
-    wire [15:0]         addr;
-    wire [7:0]          cpu_data_out;
-    wire [7:0]          cpu_data_in;
-    wire                we;
+    wire [15:0]         A;
+    wire [7:0]          DO;
+    wire [7:0]          DI;
+    wire                RW;
+    wire                RDY;
 
-    wire                rdy;
     wire                nmi;
+    wire                NMI_ = !nmi;
     wire                irq;
+    wire                IRQ_ = !irq;
+    wire                RES_ = !reset;
 
-    cpu6502 cpu(.addr(addr),
-                .data_out(cpu_data_out),
-                .we(we),
-                .data_in(cpu_data_in),
-                .rdy(rdy),
-                .nmi(nmi),
-                .irq(irq),
-                .clk(clk),
-                .reset(reset)
+    cpu6502 cpu(.A(A),
+                .RW(RW),
+                .DO(DO),
+                .DI(DI),
+                .RDY(RDY),
+                .SYNC(),
+                .IRQ_(IRQ_),
+                .NMI_(NMI_),
+                .PHI(clk),
+                .RES_(RES_)
         );
 
     ///////////////////////////////////////////////////
     // Commodore Pet hardware
     ///////////////////////////////////////////////////
-    pet2001hw hw(.addr(addr),
-                 .data_out(cpu_data_in),
-                 .data_in(cpu_data_out),
-                 .we(we),
-                 .rdy(rdy),
+    pet2001hw hw(.addr(A),
+                 .data_out(DI),
+                 .data_in(DO),
+                 .we(!RW),
+                 .rdy(RDY),
                  .nmi(nmi),
                  .irq(irq),
 

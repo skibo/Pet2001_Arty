@@ -1,42 +1,45 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2007-2011, Thomas Skibo.  All rights reserved.
+// Copyright (c) 2022 Thomas Skibo.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// * Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-// * Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the distribution.
-// * The names of contributors may not be used to endorse or promote products
-//   derived from this software without specific prior written permission.
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL Thomas Skibo OR CONTRIBUTORS BE LIABLE FOR
-// ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 //
-//////////////////////////////////////////////////////////////////////////////
 
-module cpu6502(output reg [15:0]        addr,
-               output reg [7:0]         data_out,
-               output reg               we,
-               input [7:0]              data_in,
-               input                    rdy,
-               input                    irq,
-               input                    nmi,
-               input                    reset,
-               input                    clk
-       );
+module cpu6502(
+               output reg [15:0] A,
+               output reg        RW,
+               output reg [7:0]  DO,
+               input [7:0]       DI,
+               input             RDY,
+               output reg        SYNC,
+               input             IRQ_,
+               input             NMI_,
+               input             RES_,
+               input             PHI
+               );
+
+    // convenience signals
+    wire        clk = PHI;
+    wire        reset = !RES_;
 
     localparam [15:0]
         IRQ_VEC =       16'hfffe,
@@ -76,13 +79,9 @@ module cpu6502(output reg [15:0]        addr,
             nmi_r <=    0;
         end
         else begin
-            irq_r <=    irq;
-            nmi_r <=    nmi;
+            irq_r <=    IRQ_;
+            nmi_r <=    NMI_;
         end
-
-    always @(posedge clk)
-        if (rdy)
-            data_in_r <= data_in;
 
     /////////////////
     // NMI Logic
@@ -99,118 +98,44 @@ module cpu6502(output reg [15:0]        addr,
     always @(posedge clk)
         if (reset || clr_do_nmi)
             do_nmi <= 0;
-        else if (nmi_r && !nmi_r_1)
+        else if (!nmi_r && nmi_r_1)
             do_nmi <= 1;
 
-   ///////////////////////////////////////////////////////////////////////////
-   // Instruction Decode Logic
-   //////////////////////////////////////////////////////////////////////////
-
-    parameter [4:0]     INSTR_TYPE_ALU =         0,
-                        INSTR_TYPE_STA =         1,
-                        INSTR_TYPE_BRANCH =      2,
-                        INSTR_TYPE_TYA =         3,
-                        INSTR_TYPE_TAY =         4,
-                        INSTR_TYPE_TAX =         5,
-                        INSTR_TYPE_TSX =         6,
-                        INSTR_TYPE_DEX =         7,
-                        INSTR_TYPE_DEY =         8,
-                        INSTR_TYPE_TXA =         9,
-                        INSTR_TYPE_TXS =         10,
-                        INSTR_TYPE_SCFLAGS =     11,
-                        INSTR_TYPE_SHIFT =       12,
-                        INSTR_TYPE_PSHPUL =      13,
-                        INSTR_TYPE_LDXY =        14,
-                        INSTR_TYPE_STXY =        15,
-                        INSTR_TYPE_INCXY =       16,
-                        INSTR_TYPE_CMPXY =       17,
-                        INSTR_TYPE_INCDEC =      18,
-                        INSTR_TYPE_BIT =         19,
-                        INSTR_TYPE_RTSI =        20,
-                        INSTR_TYPE_JSR =         21,
-                        INSTR_TYPE_JMP =         22,
-                        INSTR_TYPE_BRK =         23,
-                        INSTR_TYPE_NOP =         24,
-                        INSTR_TYPE_UNKNOWN =     25;
-
-    function [4:0] instr_type_func(input [7:0] instr);
-        begin
-            casex (instr)
-                8'b0000_0000:   instr_type_func = INSTR_TYPE_BRK;
-                8'b1110_1010:   instr_type_func = INSTR_TYPE_NOP;
-
-                8'b????_??01:                   // ALU/STA instr
-                    if (instr[7:5] == 3'b100)
-                        instr_type_func = INSTR_TYPE_STA;
-                    else
-                        instr_type_func = INSTR_TYPE_ALU;
-
-                8'b???1_0000:   instr_type_func = INSTR_TYPE_BRANCH;
-                8'b1001_1000:   instr_type_func = INSTR_TYPE_TYA;
-                8'b1010_1000:   instr_type_func = INSTR_TYPE_TAY;
-                8'b1010_1010:   instr_type_func = INSTR_TYPE_TAX;
-                8'b1011_1010:   instr_type_func = INSTR_TYPE_TSX;
-                8'b1100_1010:   instr_type_func = INSTR_TYPE_DEX;
-                8'b1000_1000:   instr_type_func = INSTR_TYPE_DEY;
-                8'b1000_1010:   instr_type_func = INSTR_TYPE_TXA;
-                8'b1001_1010:   instr_type_func = INSTR_TYPE_TXS;
-
-                8'b11?0_1000:   instr_type_func = INSTR_TYPE_INCXY;
-
-                8'b???1_1000:   instr_type_func = INSTR_TYPE_SCFLAGS;
-
-                8'b0??0_1000:   instr_type_func = INSTR_TYPE_PSHPUL;
-
-                8'b0010_?100:   instr_type_func = INSTR_TYPE_BIT;
-
-                8'b01?0_0000:   instr_type_func = INSTR_TYPE_RTSI;
-
-                8'b0010_0000:   instr_type_func = INSTR_TYPE_JSR;
-
-                8'b01?0_1100:   instr_type_func = INSTR_TYPE_JMP;
-
-                // ASL/LSR/ROL/ROR (shift ops)
-                8'b0???_??10:   instr_type_func = INSTR_TYPE_SHIFT;
-
-                8'b101?_???0:   instr_type_func = INSTR_TYPE_LDXY;
-
-                8'b100?_?1?0:   instr_type_func = INSTR_TYPE_STXY;
-
-                8'b11?0_??00:   instr_type_func = INSTR_TYPE_CMPXY;
-
-                8'b11??_?110:   instr_type_func = INSTR_TYPE_INCDEC;
-`ifdef brkundefined
-                default:        instr_type_func = INSTR_TYPE_UNKNOWN;
-`else
-                default:        instr_type_func = 5'bxxxxx;
-`endif
-            endcase // case (instr)
-        end
-    endfunction // instr_type_func
+    // Address modes
+    localparam [3:0]
+        ADDR_MODE_IMPLIED =     0,
+        ADDR_MODE_IMMEDIATE =   1,
+        ADDR_MODE_ZEROPG =      2,
+        ADDR_MODE_ZEROPG_X =    3,
+        ADDR_MODE_ZEROPG_Y =    4,
+        ADDR_MODE_ABS =         5,
+        ADDR_MODE_ABS_X =       6,
+        ADDR_MODE_ABS_Y =       7,
+        ADDR_MODE_INDIRECT_X =  10,
+        ADDR_MODE_INDIRECT_Y =  11,
+        ADDR_MODE_ACC =         12,
+        ADDR_MODE_RELATIVE =    13;
 
 
-    wire [4:0] instr_type = instr_type_func(instr);
-
-    parameter [3:0]  ADDR_MODE_IMPLIED =       0,
-                     ADDR_MODE_IMMEDIATE =     1,
-                     ADDR_MODE_ZEROPG =        2,
-                     ADDR_MODE_ZEROPG_X =      3,
-                     ADDR_MODE_ZEROPG_Y =      4,
-                     ADDR_MODE_JMP_ABS =       5,
-                     ADDR_MODE_ABS =           6,
-                     ADDR_MODE_ABS_X =         7,
-                     ADDR_MODE_ABS_Y =         8,
-                     ADDR_MODE_JMP_INDIRECT =  9,
-                     ADDR_MODE_INDIRECT_X =    10,
-                     ADDR_MODE_INDIRECT_Y =    11;
-
+    // Decode address mode of an instruction.
     function [3:0] addr_mode_func(input [7:0] instr);
         begin
             casex (instr)
-                8'b0000_0000,                                           // BRK
-                8'b1110_1010: addr_mode_func = ADDR_MODE_IMPLIED;       // NOP
-
-                8'b????_??01:                                           // ALU/STA instr
+                8'b0000_0000:   // BRK
+                    addr_mode_func = ADDR_MODE_IMMEDIATE; // close enough
+                8'b0010_0000:   // JSR
+                    addr_mode_func = ADDR_MODE_ABS;
+                8'b01?0_0000:   // RTI/RTS
+                    addr_mode_func = ADDR_MODE_IMPLIED;
+                8'b???1_0000:   // Branches
+                    addr_mode_func = ADDR_MODE_RELATIVE;
+                8'b???1_1000:   // Set/Clear instructions
+                    addr_mode_func = ADDR_MODE_IMPLIED;
+                8'b???0_1000:   // Other single-byte instructions
+                    addr_mode_func = ADDR_MODE_IMPLIED;
+                8'b1???_1010:   // TXA,TXS,TAX,TSX,DEX,NOP
+                        addr_mode_func = ADDR_MODE_IMPLIED;
+                8'b????_??01:   // Group one instructions
                     case (instr[4:2])
                         3'b000:  addr_mode_func = ADDR_MODE_INDIRECT_X;
                         3'b001:  addr_mode_func = ADDR_MODE_ZEROPG;
@@ -222,101 +147,74 @@ module cpu6502(output reg [15:0]        addr,
                         3'b111:  addr_mode_func = ADDR_MODE_ABS_X;
                     endcase // case (instr[4:2])
 
-                // (relative, actually)  conditional branches
-                8'b???1_0000:  addr_mode_func = ADDR_MODE_IMMEDIATE;
-
-                8'b1001_1000,                                           // TYA
-                    8'b1010_1000,                                       // TAY
-                    8'b1010_1010,                                       // TAX
-                    8'b1011_1010,                                       // TSX
-                    8'b1100_1010,                                       // DEX
-                    8'b1000_1000,                                       // DEY
-                    8'b1000_1010,                                       // TXA
-                    8'b1001_1010,                                       // TXS
-
-                    8'b11?0_1000,                                       // INCXY;
-
-                    8'b???1_1000,                                       // S/C FLAGS;
-
-                    8'b0??0_1000:                                       // PUSH/PULL
-                        addr_mode_func = ADDR_MODE_IMPLIED;
-
-                8'b0010_0100:   addr_mode_func = ADDR_MODE_ZEROPG;      // BIT
-                8'b0010_1100:   addr_mode_func = ADDR_MODE_ABS;         // BIT
-
-                8'b0010_0000:  addr_mode_func = ADDR_MODE_JMP_ABS;      // JSR
-
-                8'b0100_1100:   addr_mode_func = ADDR_MODE_JMP_ABS;     // JSR
-                8'b0110_1100:   addr_mode_func = ADDR_MODE_JMP_INDIRECT;
-
-                8'b01?0_0000:  addr_mode_func = ADDR_MODE_IMPLIED;      // RTSI
-
-                8'b0???_??10:                   // ASL/LSR/ROL/ROR (shift ops)
-                    case (instr[4:2])
-                        3'b010:  addr_mode_func = ADDR_MODE_IMPLIED;    // acc
-                        3'b001:  addr_mode_func = ADDR_MODE_ZEROPG;
-                        3'b101:  addr_mode_func = ADDR_MODE_ZEROPG_X;
-                        3'b011:  addr_mode_func = ADDR_MODE_ABS;
-                        3'b111:  addr_mode_func = ADDR_MODE_ABS_X;
-                        default: addr_mode_func = 4'hX;
-                    endcase
-
-                8'b101?_???0:                                           // LD[XY]
+                8'b????_???0:   // Group two and three instructions
                     case (instr[4:2])
                         3'b000:  addr_mode_func = ADDR_MODE_IMMEDIATE;
                         3'b001:  addr_mode_func = ADDR_MODE_ZEROPG;
-                        3'b101:  addr_mode_func = instr[1] ? ADDR_MODE_ZEROPG_Y : ADDR_MODE_ZEROPG_X;
+                        3'b010:  addr_mode_func = ADDR_MODE_ACC;
                         3'b011:  addr_mode_func = ADDR_MODE_ABS;
-                        3'b111:  addr_mode_func = instr[1] ? ADDR_MODE_ABS_Y : ADDR_MODE_ABS_X;
-                        default: addr_mode_func = 4'hX;
-                    endcase
-                8'b100?_?1?0:                                           // ST[XY]
-                    case (instr[4:3])
-                        2'b00:   addr_mode_func = ADDR_MODE_ZEROPG;
-                        2'b10:   addr_mode_func = instr[1] ? ADDR_MODE_ZEROPG_Y : ADDR_MODE_ZEROPG_X;
-                        2'b01:   addr_mode_func = ADDR_MODE_ABS;
-                        default: addr_mode_func = 4'hX;
-                    endcase
-
-                8'b11?0_??00:                                           // CMP[XY]
-                    case (instr[3:2])
-                        2'b00:   addr_mode_func = ADDR_MODE_IMMEDIATE;
-                        2'b01:   addr_mode_func = ADDR_MODE_ZEROPG;
-                        2'b11:   addr_mode_func = ADDR_MODE_ABS;
-                        default: addr_mode_func = 4'hX;
-                    endcase
-
-                8'b11??_?110:                                           // INC/DEC
-                    case (instr[4:3])
-                        2'b00:   addr_mode_func = ADDR_MODE_ZEROPG;
-                        2'b10:   addr_mode_func = ADDR_MODE_ZEROPG_X;
-                        2'b01:   addr_mode_func = ADDR_MODE_ABS;
-                        2'b11:   addr_mode_func = ADDR_MODE_ABS_X;
-                    endcase
-
-                default:  addr_mode_func = 3'hX;
-
-            endcase // case(instr)
+                        3'b101:
+                            if (instr == 8'h96 || instr == 8'hb6) // STX/LDX
+                                addr_mode_func = ADDR_MODE_ZEROPG_Y;
+                            else
+                                addr_mode_func = ADDR_MODE_ZEROPG_X;
+                        3'b111:
+                            if (instr == 8'hbe) // LDX
+                                addr_mode_func = ADDR_MODE_ABS_Y;
+                            else
+                                addr_mode_func = ADDR_MODE_ABS_X;
+                        default: begin
+                            // synthesis translate_off
+                            $display("[%t] Instruction decode fail? %h", $time,
+                                     instr);
+                            $stop;
+                            // synthesis translate_on
+                        end
+                    endcase // case (instr[4:2])
+                default: begin
+                    addr_mode_func = 4'hX;
+                    // synthesis translate_off
+                    $display("[%t] Instruction decode fail? %h", $time, instr);
+                    $stop;
+                    // synthesis translate_on
+                end
+            endcase // case (instr)
         end
-    endfunction
-
+    endfunction // addr_mode_func
 
     wire [3:0] addr_mode = addr_mode_func(instr);
 
-    // This function helps further decode
-    // conditional branches.
-    function [0:0] do_branch_func(input [7:0] instr,
-                                  input [7:0] p);
+    // Modify Z and N flags based upon an operation result.  Used by many
+    // instructions.  Returns modified processor status register.
+    function [7:0] func_nzflags(input [7:0] p_old,
+                                input [7:0] value);
         begin
-            case (instr[7:6])
-                2'b00:   do_branch_func = (p[P_N] == instr[5]);
-                2'b01:   do_branch_func = (p[P_V] == instr[5]);
-                2'b10:   do_branch_func = (p[P_C] == instr[5]);
-                2'b11:   do_branch_func = (p[P_Z] == instr[5]);
-            endcase
+            func_nzflags = p_old;
+            func_nzflags[P_Z] = (value == 8'h00);
+            func_nzflags[P_N] = value[7];
         end
     endfunction
 
+    // Perform compare operation.  Used by CMP, CPX, CPY.  Returns modified
+    // processor status register.
+    function [7:0] func_compare(input [7:0] p_old,
+                                input [7:0] operand1,
+                                input [7:0] operand2);
+        begin:cmp
+            reg [7:0] result;
+            reg       borrow;
+            reg [7:0] p_new;
+
+            p_new = p_old;
+
+            {borrow, result} = ({1'b0, operand1} - operand2);
+            p_new[P_C] = ~borrow;
+            p_new[P_N] = result[7];
+            p_new[P_Z] = (result == 8'h00);
+
+            func_compare = p_new;
+        end
+    endfunction
 
     wire [15:0] pc_inc = pc + 1'b1;
     wire [15:0] pc_dec = pc - 1'b1;
@@ -328,27 +226,28 @@ module cpu6502(output reg [15:0]        addr,
     /////////////////////////////////////////////////////
     reg [4:0]      cpu_sm;
 
-    parameter [4:0]     CPU_SM_RESET =          5'd0,
-                        CPU_SM_VECTOR1 =        5'd1,
-                        CPU_SM_VECTOR2 =        5'd2,
-                        CPU_SM_STALL =          5'd3,
-                        CPU_SM_DECODE =         5'd4,
-                        CPU_SM_FETCH_I1 =       5'd5,
-                        CPU_SM_FETCH_I2 =       5'd6,
-                        CPU_SM_FETCH_INL =      5'd7,
-                        CPU_SM_FETCH_INH =      5'd8,
-                        CPU_SM_EXECUTE =        5'd9,
-                        CPU_SM_STORE =          5'd10,
-                        CPU_SM_PULL =           5'd11,
-                        CPU_SM_JSR1 =           5'd12,
-                        CPU_SM_JSR2 =           5'd13,
-                        CPU_SM_RTI =            5'd14,
-                        CPU_SM_RTS1 =           5'd15,
-                        CPU_SM_RTS2 =           5'd16,
-                        CPU_SM_INTR1 =          5'd17,
-                        CPU_SM_INTR2 =          5'd18,
-                        CPU_SM_INTR3 =          5'd19,
-                        CPU_SM_INTR4 =          5'd20;
+    localparam [4:0]
+        CPU_SM_RESET =          0,
+        CPU_SM_VECTOR1 =        1,
+        CPU_SM_VECTOR2 =        2,
+        CPU_SM_STALL =          3,
+        CPU_SM_DECODE =         4,
+        CPU_SM_BRANCH =         5,
+        CPU_SM_FETCH_I1 =       6,
+        CPU_SM_FETCH_I2 =       7,
+        CPU_SM_FETCH_IND1 =     8,
+        CPU_SM_FETCH_IND2 =     9,
+        CPU_SM_EXECUTE =        10,
+        CPU_SM_STORE =          11,
+        CPU_SM_JSR1 =           12,
+        CPU_SM_JSR2 =           13,
+        CPU_SM_INTR1 =          17,
+        CPU_SM_INTR2 =          18,
+        CPU_SM_INTR3 =          19,
+        CPU_SM_INTR4 =          20,
+        CPU_SM_RTI =            21,
+        CPU_SM_RTSI1 =          22,
+        CPU_SM_RTSI2 =          23;
 
     // combinatorial outputs of always @(*) block below.
     reg [4:0]      cpu_sm_nxt;
@@ -366,22 +265,24 @@ module cpu6502(output reg [15:0]        addr,
     always @(posedge clk)
         if (reset)
             cpu_sm <=   CPU_SM_RESET;
-        else
+        else if (RDY)
             cpu_sm <=   cpu_sm_nxt;
 
     // Implement Registers
-    always @(posedge clk) begin
-        pc <=           pc_nxt;
-        sp <=           sp_nxt;
-        p <=            p_nxt;
+    always @(posedge clk)
+        if (RDY) begin
+            pc <=           pc_nxt;
+            sp <=           sp_nxt;
+            p <=            p_nxt;
+            acc <=          acc_nxt;
+            x <=            x_nxt;
+            y <=            y_nxt;
 
-        acc <=          acc_nxt;
-        x <=            x_nxt;
-        y <=            y_nxt;
-        instr <=        instr_nxt;
-        opaddr_l <=     opaddr_l_nxt;
-        opaddr_h <=     opaddr_h_nxt;
-    end
+            data_in_r <=    DI;
+            instr <=        instr_nxt;
+            opaddr_l <=     opaddr_l_nxt;
+            opaddr_h <=     opaddr_h_nxt;
+        end
 
     // Main state machine.
     always @(*) begin
@@ -397,641 +298,599 @@ module cpu6502(output reg [15:0]        addr,
         opaddr_l_nxt =  opaddr_l;
         opaddr_h_nxt =  opaddr_h;
 
-        addr =          pc;
-        data_out =      8'hXX;
-        we =            0;
+        A =             pc;
+        SYNC =          0;
+        DO =            8'hXX;
+        RW =            1;
 
         clr_do_nmi =    0;
 
         case (cpu_sm)
+            // Reset state.  Get ready to read RESET vector.
             CPU_SM_RESET: begin
                 pc_nxt = RESET_VEC;
+                A = RESET_VEC;
                 sp_nxt = 8'hff;
                 p_nxt = 8'h24;
-                addr = RESET_VEC;
-                if (rdy && !reset) begin
-                    pc_nxt = pc_inc;
+                if (!reset) begin
+                    pc_nxt = RESET_VEC + 1;
                     cpu_sm_nxt = CPU_SM_VECTOR1;
                 end
             end
 
-            // Fetched low byte of RESET, NMI, or IRQ vector.  Vector address is in pc.
+            // Fetched low byte of RESET, NMI, or IRQ vector.
+            // Vector address is in pc.
             CPU_SM_VECTOR1: begin
                 opaddr_l_nxt = data_in_r;
-                if (rdy)
-                    cpu_sm_nxt = CPU_SM_VECTOR2;
+                pc_nxt = pc_inc;
+                cpu_sm_nxt = CPU_SM_VECTOR2;
             end
 
             // Fetched high byte of RESET, NMI, or IRQ vector.
             CPU_SM_VECTOR2: begin
                 pc_nxt = {data_in_r, opaddr_l};
-                if (rdy)
-                    cpu_sm_nxt = CPU_SM_STALL;
+                cpu_sm_nxt = CPU_SM_STALL;
             end
 
-            // If PC changed, we need to stall.
+            // If PC has changed, we need to stall.
             CPU_SM_STALL: begin
-                instr_nxt = data_in;
-                if (rdy) begin
-                    pc_nxt = pc_inc;
-                    cpu_sm_nxt = CPU_SM_DECODE;
-                end
+                instr_nxt = DI;
+                SYNC = 1;
+                pc_nxt = pc_inc;
+                cpu_sm_nxt = CPU_SM_DECODE;
             end
 
             // Decode opcode and execute many single byte instructions.
-            CPU_SM_DECODE: begin
-                if (do_nmi || (irq_r && ! p[P_I])) begin // IRQ, NMI?
+            CPU_SM_DECODE:
+                if (do_nmi || (!irq_r && !p[P_I])) begin // IRQ, NMI?
                     pc_nxt = pc_dec;
                     cpu_sm_nxt = CPU_SM_INTR1;
                 end
                 else begin
-
-                    if (instr_type == INSTR_TYPE_PSHPUL) begin
-                        if (instr[5])           // PLP/PLA
-                            addr = {8'h01, sp_inc};
-                        else begin
-                            addr = {8'h01, sp}; // PHP/PHA
-                            data_out = instr[6] ? acc : (p | (8'd1<<P_B));
-                            we = 1;
-                        end
-                    end
-                    else if (instr_type == INSTR_TYPE_RTSI)
-                        addr = {8'h01, sp_inc};
-
-                    if (rdy) begin
-                        if (addr_mode == ADDR_MODE_IMPLIED) begin
-
-                            if (instr_type != INSTR_TYPE_RTSI &&
-                                instr_type != INSTR_TYPE_PSHPUL) begin
-                                pc_nxt = pc_inc;
-                                instr_nxt = data_in;
-                            end
-
-                            // Most one-byte instructions are handled here.
-                            case (instr_type)
-                                INSTR_TYPE_TYA: begin
-                                    p_nxt[P_Z] = (y == 8'h00);
-                                    p_nxt[P_N] = y[7];
-                                    acc_nxt = y;
-                                end
-                                INSTR_TYPE_TAY: begin
-                                    p_nxt[P_Z] = (acc == 8'h00);
-                                    p_nxt[P_N] = acc[7];
-                                    y_nxt = acc;
-                                end
-                                INSTR_TYPE_TAX: begin
-                                    p_nxt[P_Z] = (acc == 8'h00);
-                                    p_nxt[P_N] = acc[7];
-                                    x_nxt = acc;
-                                end
-                                INSTR_TYPE_TSX: begin
-                                    p_nxt[P_Z] = (sp == 8'h00);
-                                    p_nxt[P_N] = sp[7];
-                                    x_nxt = sp;
-                                end
-                                INSTR_TYPE_DEX: begin
-                                    p_nxt[P_Z] = (x == 8'h01);
-                                    p_nxt[P_N] = (x == 8'h00 || (x[7] && x != 8'h80));
-                                    x_nxt = x - 1'b1;
-                                end
-                                INSTR_TYPE_DEY: begin
-                                    p_nxt[P_Z] = (y == 8'h01);
-                                    p_nxt[P_N] = (y == 8'h00 || (y[7] && y != 8'h80));
-                                    y_nxt = y - 1'b1;
-                                end
-                                INSTR_TYPE_TXA: begin
-                                    p_nxt[P_Z] = (x == 8'h00);
-                                    p_nxt[P_N] = x[7];
-                                    acc_nxt = x;
-                                end
-                                INSTR_TYPE_TXS:
-                                    sp_nxt = x;
-                                INSTR_TYPE_INCXY:
-                                    if (instr[5]) begin
-                                        p_nxt[P_Z] = (x == 8'hff);
-                                        p_nxt[P_N] = (x == 8'h7f || (x[7] && x != 8'hff));
-                                        x_nxt = x + 1'b1;
-                                    end
-                                    else begin
-                                        p_nxt[P_Z] = (y == 8'hff);
-                                        p_nxt[P_N] = (y == 8'h7f || (y[7] && y != 8'hff));
-                                        y_nxt = y + 1'b1;
-                                    end
-                                INSTR_TYPE_SCFLAGS:
-                                    // Set or clear P flags.
-                                    case (instr[7:6])
-                                        2'b00: p_nxt[P_C] = instr[5];
-                                        2'b01: p_nxt[P_I] = instr[5];
-                                        2'b10: p_nxt[P_V] = 1'b0;
-                                        2'b11: p_nxt[P_D] = instr[5];
-                                    endcase
-                                INSTR_TYPE_SHIFT: begin
-                                    case (instr[6:5])
-                                        2'b00:  {p_nxt[P_C], acc_nxt} = {acc, 1'b0};   // ASL
-                                        2'b01:  {p_nxt[P_C], acc_nxt} = {acc, p[P_C]};// ROL
-                                        2'b10:  {acc_nxt, p_nxt[P_C]} = {1'b0, acc};   // LSR
-                                        2'b11:  {acc_nxt, p_nxt[P_C]} = {p[P_C], acc};// ROR
-                                    endcase
-
-                                    p_nxt[P_Z] = (acc_nxt == 8'h00);
-                                    p_nxt[P_N] = acc_nxt[7];
-                                end
-
-                                INSTR_TYPE_PSHPUL:
-                                    if (instr[5]) begin   // PLP/PLA
-                                        sp_nxt = sp_inc;
-                                        cpu_sm_nxt = CPU_SM_PULL;
-                                    end
-                                    else begin
-                                        sp_nxt = sp_dec;
-                                        cpu_sm_nxt = CPU_SM_STORE;
-                                    end
-
-                                INSTR_TYPE_RTSI: begin
-                                    sp_nxt = sp_inc;
-                                    if (instr[5])
-                                        cpu_sm_nxt = CPU_SM_RTS1;
-                                    else
-                                        cpu_sm_nxt = CPU_SM_RTI;
-                                end
-
-                                INSTR_TYPE_BRK: begin
-                                    p_nxt[P_B] = 1;
-                                    cpu_sm_nxt = CPU_SM_INTR1;
-                                end
-
-                                INSTR_TYPE_NOP: ;
-                                default: begin
-`ifdef brkundefined
-                                    p_nxt[P_B] = 1;
-                                    cpu_sm_nxt = CPU_SM_INTR1;
-`endif
-`ifdef simulation
-                                    $display("%t: decode problem in cpu sm",$time);
-                                    $stop;
-`endif
-                                end
-                            endcase // instr_type
-                        end
-                        else if (addr_mode == ADDR_MODE_IMMEDIATE) begin
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_EXECUTE;
-                        end
-                        else begin
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_FETCH_I1;
-                        end
-                    end // if (rdy)
-                end
-            end // case: CPU_SM_DECODE
-
-            // Fetched second byte of an instruction
-            CPU_SM_FETCH_I1: begin
-
-                // Calculate address output
-                case (addr_mode)
-                    ADDR_MODE_ZEROPG:       addr = {8'h00, data_in_r};
-                    ADDR_MODE_ZEROPG_X:     addr = {8'h00, data_in_r + x};
-                    ADDR_MODE_ZEROPG_Y:     addr = {8'h00, data_in_r + y};
-                    ADDR_MODE_INDIRECT_X:   addr = {8'h00, data_in_r + x};
-                    ADDR_MODE_INDIRECT_Y:   addr = {8'h00, data_in_r};
-                endcase
-
-                if ((addr_mode == ADDR_MODE_ZEROPG ||
-                     addr_mode == ADDR_MODE_ZEROPG_X ||
-                     addr_mode == ADDR_MODE_ZEROPG_Y) &&
-                    (instr_type == INSTR_TYPE_STA ||
-                     instr_type == INSTR_TYPE_STXY)) begin
-                    we = 1;
-                    data_out = ((instr_type == INSTR_TYPE_STA) ? acc : (instr[1] ? x : y));
-                end
-
-                opaddr_h_nxt = 8'h00;
-
-                if (rdy) begin
-                    if (instr_type == INSTR_TYPE_JSR) begin
-                        opaddr_l_nxt = data_in_r;
-                        cpu_sm_nxt = CPU_SM_JSR1;
-                    end
-                    else begin
-                        case (addr_mode)
-                            ADDR_MODE_ZEROPG,
-                            ADDR_MODE_ZEROPG_X,
-                            ADDR_MODE_ZEROPG_Y: begin
-                                opaddr_l_nxt = addr[7:0];
-                                if (instr_type == INSTR_TYPE_STA || instr_type == INSTR_TYPE_STXY)
-                                    cpu_sm_nxt = CPU_SM_STORE;
-                                else
-                                    cpu_sm_nxt = CPU_SM_EXECUTE;
-                            end
-                            ADDR_MODE_INDIRECT_X,
-                            ADDR_MODE_INDIRECT_Y: begin
-                                opaddr_l_nxt = addr[7:0];
-                                cpu_sm_nxt = CPU_SM_FETCH_INL;
-                            end
-                            default: begin
-                                opaddr_l_nxt = data_in_r;
-                                pc_nxt = pc_inc;
-                                cpu_sm_nxt = CPU_SM_FETCH_I2;
-                            end
-                        endcase
-                    end
-                end
-            end // case: CPU_SM_FETCH_I1
-
-            // Fetch third byte of an instruction.
-            CPU_SM_FETCH_I2: begin
-                case (addr_mode)
-                    ADDR_MODE_ABS_X:  addr = {data_in_r, opaddr_l} + x;
-                    ADDR_MODE_ABS_Y:  addr = {data_in_r, opaddr_l} + y;
-                    default:          addr = {data_in_r, opaddr_l};
-                endcase
-
-                if (instr_type == INSTR_TYPE_STA || instr_type == INSTR_TYPE_STXY) begin
-                    we = 1;
-                    data_out = ((instr_type == INSTR_TYPE_STA) ? acc : (instr[1] ? x : y));
-                end
-
-                opaddr_h_nxt = addr[15:8];
-
-                if (rdy) begin
-                    opaddr_l_nxt = addr[7:0];
-                    case (instr_type)
-                        INSTR_TYPE_STA,
-                        INSTR_TYPE_STXY:
-                            cpu_sm_nxt = CPU_SM_STORE;
-                        INSTR_TYPE_JMP:
-                            if (addr_mode == ADDR_MODE_JMP_INDIRECT)
-                                cpu_sm_nxt = CPU_SM_FETCH_INL;
-                            else begin
-                                pc_nxt = {data_in_r, opaddr_l};
-                                cpu_sm_nxt = CPU_SM_STALL;
-                            end
-                        default:
-                            cpu_sm_nxt = CPU_SM_EXECUTE;
-                    endcase
-                end
-            end // case: CPU_SM_FETCH_I2
-
-            // Fetched one-byte operand or low-byte of address for
-            // indirect addressing modes.
-            CPU_SM_FETCH_INL: begin
-                addr = {opaddr_h, opaddr_l + 1'b1};
-
-                if (rdy) begin
-                    opaddr_l_nxt = data_in_r;
-                    cpu_sm_nxt = CPU_SM_FETCH_INH;
-                end
-            end
-
-            // Fetched high-byte of address for indirect addressing modes.
-            CPU_SM_FETCH_INH: begin
-
-                if (addr_mode == ADDR_MODE_INDIRECT_Y)
-                    addr = {data_in_r, opaddr_l} + y;
-                else
-                    addr = {data_in_r, opaddr_l};
-                if (instr_type == INSTR_TYPE_STA) begin
-                    data_out = acc;
-                    we = 1;
-                end
-
-                if (rdy) begin
-                    case (instr_type)
-                        INSTR_TYPE_STA:
-                            cpu_sm_nxt = CPU_SM_STORE;
-                        INSTR_TYPE_JMP: begin
-                            pc_nxt = {data_in_r, opaddr_l};
-                            cpu_sm_nxt = CPU_SM_STALL;
-                        end
-                        default:
-                            cpu_sm_nxt = CPU_SM_EXECUTE;
-                    endcase
-                end
-            end // case: CPU_SM_FETCH_INH
-
-            // Store cycle
-            CPU_SM_STORE:               // STA, STX, STY, all the RMW stores.
-                if (rdy) begin
                     pc_nxt = pc_inc;
-                    instr_nxt = data_in;
-                    cpu_sm_nxt = CPU_SM_DECODE;
-                end
-
-            // Execute cycle for instructions not handled in decode cycle
-            CPU_SM_EXECUTE: begin
-
-                // Determine addr, data_out, and we signals.
-                case (instr_type)
-                    INSTR_TYPE_BRANCH:
-                        if (do_branch_func(instr,p))
-                            addr = pc + {{8{data_in_r[7]}}, data_in_r};
-
-                    INSTR_TYPE_SHIFT: begin                     // RMW Shift instructions
-                        addr = {opaddr_h, opaddr_l};
-                        case (instr[6:5])
-                            2'b00:  data_out = {data_in_r[6:0], 1'b0};          // ASL
-                            2'b01:  data_out = {data_in_r[6:0], p[P_C]};       // ROL
-                            2'b10:  data_out = {1'b0, data_in_r[7:1]};          // LSR
-                            2'b11:  data_out = {p[P_C], data_in_r[7:1]};       // ROR
-                        endcase
-                        we = 1;
-                    end
-
-                    INSTR_TYPE_INCDEC: begin                    // RMW INC/DEC instructions
-                        addr = {opaddr_h, opaddr_l};
-                        if (instr[5])
-                            data_out = data_in_r + 1'b1;
-                        else
-                            data_out = data_in_r - 1'b1;
-                        we = 1;
-                    end
-                endcase
-
-                if (rdy) begin
-
-                    if (addr_mode == ADDR_MODE_IMMEDIATE)
-                        pc_nxt = pc_inc;
-
-                    case (instr_type)
-                        INSTR_TYPE_ALU: begin
-                            case (instr[7:5])
-                                3'b000:  acc_nxt = acc | data_in_r;     // ORA
-                                3'b001:  acc_nxt = acc & data_in_r;     // AND
-                                3'b010:  acc_nxt = acc ^ data_in_r;     // EOR
-                                3'b011: begin                           // ADC
-                                    if (p[P_D]) begin:bcd_adc
-                                        reg [4:0] nyb_l;
-                                        reg [4:0] nyb_h;
-
-                                        nyb_l = {1'b0, acc[3:0]} + data_in_r[3:0] + p[P_C];
-                                        if (nyb_l > 5'd9)
-                                            nyb_l = nyb_l + 5'd6;
-                                        nyb_h = {1'b0, acc[7:4]} + data_in_r[7:4] + nyb_l[4];
-                                        if (nyb_h > 5'd9)
-                                            nyb_h = nyb_h + 5'd6;
-                                        acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
-                                        p_nxt[P_C] = nyb_h[4];
-                                    end
-                                    else
-                                        {p_nxt[P_C], acc_nxt} = {1'b0, acc} + data_in_r + p[P_C];
-                                    p_nxt[P_V] = (acc[7] == data_in_r[7]) && (acc[7] != acc_nxt[7]);
-                                end
-                                3'b101:  acc_nxt = data_in_r;           // LDA
-                                3'b110: begin:cmp_blk                   // CMP
-                                    reg [7:0] result;
-                                    reg borrow;
-                                    {borrow, result} = ({1'b0, acc} - data_in_r);
-                                    p_nxt[P_C] = ~borrow;
-                                    p_nxt[P_N] = result[7];
-                                    p_nxt[P_Z] = (result == 8'h00);
-                                end
-                                3'b111: begin                           // SBC
-                                    if (p[P_D]) begin:bcd_sbc
-                                        reg [4:0] nyb_l;
-                                        reg [4:0] nyb_h;
-
-                                        nyb_l = {1'b0, acc[3:0]} - data_in_r[3:0] - !p[P_C];
-                                        if (nyb_l[4])
-                                            nyb_l = nyb_l - 5'd6;
-                                        nyb_h = {1'b0, acc[7:4]} - data_in_r[7:4] - nyb_l[4];
-                                        if (nyb_h[4])
-                                            nyb_h = nyb_h - 5'd6;
-
-                                        acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
-                                        p_nxt[P_C] = ~nyb_h[4];
-                                    end
-                                    else begin:sbc
-                                        reg borrow;
-                                        {borrow, acc_nxt} = {1'b0, acc} - data_in_r - !p[P_C];
-                                        p_nxt[P_C] = ~borrow;
-                                    end
-                                    p_nxt[P_V] = (acc[7] != data_in_r[7]) && (acc[7] != acc_nxt[7]);
-                                end
-                            endcase // case (instr_type)
-
-                            if (instr[7:5] != 3'b110) begin // not CMP instruction
-                                p_nxt[P_N] = acc_nxt[7];
-                                p_nxt[P_Z] = (acc_nxt == 8'h00);
-                            end
-
-                            instr_nxt = data_in;
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_DECODE;
-                        end // INSTR_TYPE_ALU
-
-                        INSTR_TYPE_BRANCH: begin         // Conditional branches
-                            if (do_branch_func(instr,p)) begin
-                                pc_nxt = addr;
-                                cpu_sm_nxt = CPU_SM_STALL;
-                            end
-                            else begin
-                                instr_nxt = data_in;
-                                pc_nxt = pc_inc;
-                                cpu_sm_nxt = CPU_SM_DECODE;
-                            end
+                    casex (instr)
+                        8'b0000_0000: begin     // BRK
+                            p_nxt[P_B] = 1;
+                            cpu_sm_nxt = CPU_SM_INTR1;
                         end
 
-                        INSTR_TYPE_SHIFT: begin                     // RMW Shift instructions
-                            p_nxt[P_C] = instr[6] ? data_in_r[0] : data_in_r[7];
-                            p_nxt[P_Z] = (data_out == 8'h00);
-                            p_nxt[P_N] = data_out[7];
-                            cpu_sm_nxt = CPU_SM_STORE;
-                        end
+                        8'b0010_0000:           // JSR
+                            cpu_sm_nxt = CPU_SM_FETCH_I1;
 
-                        INSTR_TYPE_LDXY: begin                                          // LDX/LDY
-                            if (instr[1])
-                                x_nxt = data_in_r;
+                        8'b01?0_0000: begin     // RTI/RTS
+                            A = {8'h01, sp_inc};
+                            sp_nxt = sp_inc;
+                            if (instr[5])
+                                cpu_sm_nxt = CPU_SM_RTSI1;
                             else
-                                y_nxt = data_in_r;
-                            p_nxt[P_N] = data_in_r[7];
-                            p_nxt[P_Z] = (data_in_r == 8'h00);
-
-                            instr_nxt = data_in;
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_DECODE;
+                                cpu_sm_nxt = CPU_SM_RTI;
                         end
 
-                        INSTR_TYPE_CMPXY: begin                                         // CPX/CPY
+                        8'b???1_0000:           // Branches
+                            cpu_sm_nxt = CPU_SM_BRANCH;
+
+                        8'b???1_1000: begin // Flag Set/Clear, TYA instrs
+                            case (instr[7:6])
+                                2'b00: p_nxt[P_C] = instr[5];   // CLC / SEC
+                                2'b01: p_nxt[P_I] = instr[5];   // CLI / SEI
+                                2'b10:
+                                    if (instr[5])
+                                        p_nxt[P_V] = 0;         // CLV
+                                    else begin                  // TYA
+                                        acc_nxt = y;
+                                        p_nxt = func_nzflags(p, acc_nxt);
+                                    end
+                                2'b11: p_nxt[P_D] = instr[5];   // CLD / SED
+                            endcase
+                            instr_nxt = DI;
+                            SYNC = 1;
+                        end
+
+                        8'b0??0_1000: begin     // PHP/PLP/PHA/PLA
+                            pc_nxt = pc;
                             if (instr[5]) begin
-                                p_nxt[P_N] = (((x - data_in_r) & 8'h80) != 8'h00);
-                                p_nxt[P_C] = (x >= data_in_r);
-                                p_nxt[P_Z] = (x == data_in_r);
+                                // Pull
+                                A = {8'h01, sp_inc};
+                                sp_nxt = sp_inc;
+                                cpu_sm_nxt = CPU_SM_EXECUTE;
                             end
                             else begin
-                                p_nxt[P_N] = (((y - data_in_r) & 8'h80) != 8'h00);
-                                p_nxt[P_C] = (y >= data_in_r);
-                                p_nxt[P_Z] = (y == data_in_r);
+                                // Push
+                                A = {8'h01, sp};
+                                DO = instr[6] ? acc : (p | (8'h01 << P_B));
+                                RW = 0;
+                                sp_nxt = sp_dec;
+                                cpu_sm_nxt = CPU_SM_STORE;
                             end
-
-                            instr_nxt = data_in;
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_DECODE;
                         end
 
-                        INSTR_TYPE_INCDEC: begin                // INC/DEC (read-modify-write)
-                            p_nxt[P_N] = data_out[7];
-                            p_nxt[P_Z] = (data_out == 8'h00);
-                            cpu_sm_nxt = CPU_SM_STORE;
+                        8'b1??0_1000: begin // Other one byte instrs
+                            case (instr[6:5])
+                                2'b00: begin // DEY
+                                    y_nxt = y - 1;
+                                    p_nxt = func_nzflags(p, y_nxt);
+                                end
+                                2'b01: begin // TAY
+                                    y_nxt = acc;
+                                    p_nxt = func_nzflags(p, y_nxt);
+                                end
+                                2'b10: begin // INY
+                                    y_nxt = y + 1;
+                                    p_nxt = func_nzflags(p, y_nxt);
+                                end
+                                2'b11: begin // INX
+                                    x_nxt = x + 1;
+                                    p_nxt = func_nzflags(p, x_nxt);
+                                end
+                            endcase
+                            instr_nxt = DI;
+                            SYNC = 1;
                         end
 
-                        INSTR_TYPE_BIT: begin                   // BIT instructions
-                            p_nxt[P_N] = data_in_r[7];
-                            p_nxt[P_V] = data_in_r[6];
-                            p_nxt[P_Z] = ((acc & data_in_r) == 8'h00);
+                        8'b1???_1010: begin // TXA,TXS,TAX,TSX,DEX,NOP
+                            case (instr[6:4])
+                                3'b000: begin       // TXA
+                                    acc_nxt = x;
+                                    p_nxt = func_nzflags(p, acc_nxt);
+                                end
+                                3'b001: sp_nxt = x; // TXS
+                                3'b010: begin       // TAX
+                                    x_nxt = acc;
+                                    p_nxt = func_nzflags(p, x_nxt);
+                                end
+                                3'b011: begin       // TSX
+                                    x_nxt = sp;
+                                    p_nxt = func_nzflags(p, x_nxt);
+                                end
+                                3'b100: begin       // DEX
+                                    x_nxt = x - 1;
+                                    p_nxt = func_nzflags(p, x_nxt);
+                                end
+                            endcase
+                            instr_nxt = DI;
+                            SYNC = 1;
+                        end
 
-                            instr_nxt = data_in;
-                            pc_nxt = pc_inc;
-                            cpu_sm_nxt = CPU_SM_DECODE;
+                        8'b????_??01: begin // Group one instructions
+                            if (addr_mode == ADDR_MODE_IMMEDIATE)
+                                cpu_sm_nxt = CPU_SM_EXECUTE;
+                            else
+                                cpu_sm_nxt = CPU_SM_FETCH_I1;
+                        end
+
+                        8'b????_??10: begin // Group two instructions
+                            if (addr_mode == ADDR_MODE_ACC) begin
+                                case (instr[6:5])
+                                    2'b00: // ASL A
+                                        {p_nxt[P_C], acc_nxt} = {acc, 1'b0};
+                                    2'b01: // ROL A
+                                        {p_nxt[P_C], acc_nxt} = {acc, p[P_C]};
+                                    2'b10: // LSR A
+                                        {acc_nxt, p_nxt[P_C]} = {1'b0, acc};
+                                    2'b11: // ROR A
+                                        {acc_nxt, p_nxt[P_C]} = {p[P_C], acc};
+                                endcase
+                                p_nxt = func_nzflags(p_nxt, acc_nxt);
+                                instr_nxt = DI;
+                                SYNC = 1;
+                            end
+                            else if (addr_mode == ADDR_MODE_IMMEDIATE)
+                                cpu_sm_nxt = CPU_SM_EXECUTE; // LDX #imm
+                            else
+                                cpu_sm_nxt = CPU_SM_FETCH_I1;
+                        end
+
+                        8'b????_??00: begin // Group three instructions
+                            if (addr_mode == ADDR_MODE_IMMEDIATE)
+                                cpu_sm_nxt = CPU_SM_EXECUTE;
+                            else
+                                cpu_sm_nxt = CPU_SM_FETCH_I1;
                         end
 
                         default: begin
-`ifdef simulation
-                            $display("[%t] INSTRUCTION DECODE PROBLEM instr=%h", $time, instr);
+                            // synthesis translate_off
+                            $display("[%t] Instruction decode fail? %h",
+                                     $time, instr);
                             $stop;
-`endif
+                            // synthesis translate_on
                         end
-                    endcase
-                end // if (rdy)
-            end // case: CPU_SM_EXECUTE
+                    endcase // case (instr)
+                end // CPU_SM_DECODE
 
-            // Read cycle for PLA/PLP data_in_rations
-            CPU_SM_PULL: begin
-                if (rdy) begin
-                    if (instr[6]) begin
-                        acc_nxt = data_in_r;
-                        p_nxt[P_N] = data_in_r[7];
-                        p_nxt[P_Z] = (data_in_r == 8'h00);
-                    end
-                    else begin
-                        p_nxt = data_in_r;
-                        p_nxt[P_B] = 0;
-                        p_nxt[P_1] = 1;
-                    end
+            // Execute conditional branches.
+            CPU_SM_BRANCH: begin:br
+                reg do_branch;
 
-                    instr_nxt = data_in;
+                case (instr[7:6])
+                    2'b00: do_branch = (p[P_N] == instr[5]);
+                    2'b01: do_branch = (p[P_V] == instr[5]);
+                    2'b10: do_branch = (p[P_C] == instr[5]);
+                    2'b11: do_branch = (p[P_Z] == instr[5]);
+                endcase
+
+                if (do_branch) begin
+                    pc_nxt = pc + {{8{data_in_r[7]}}, data_in_r};
+                    cpu_sm_nxt = CPU_SM_STALL;
+                end
+                else begin
+                    instr_nxt = DI;
+                    SYNC = 1;
                     pc_nxt = pc_inc;
                     cpu_sm_nxt = CPU_SM_DECODE;
                 end
             end
 
-            // Fetched second byte of JSR, begin push of high return address
-            CPU_SM_JSR1: begin
-                opaddr_h_nxt = data_in_r;
+            // Fetch first byte of operand
+            CPU_SM_FETCH_I1: begin
+                opaddr_h_nxt = 8'h00;
 
-                addr = {8'h01, sp};
-                data_out = pc[15:8];
-                we = 1;
+                // Calculate address output (other than absolute
+                // which uses the pc).
+                case (addr_mode)
+                    ADDR_MODE_ZEROPG:       A = {8'h00, data_in_r};
+                    ADDR_MODE_ZEROPG_X:     A = {8'h00, data_in_r + x};
+                    ADDR_MODE_ZEROPG_Y:     A = {8'h00, data_in_r + y};
+                    ADDR_MODE_INDIRECT_X:   A = {8'h00, data_in_r + x};
+                    ADDR_MODE_INDIRECT_Y:   A = {8'h00, data_in_r};
+                endcase
 
-                if (rdy) begin
-                    sp_nxt = sp_dec;
-                    cpu_sm_nxt = CPU_SM_JSR2;
-                end
-            end
+                case (addr_mode)
+                    ADDR_MODE_ZEROPG,
+                    ADDR_MODE_ZEROPG_X,
+                    ADDR_MODE_ZEROPG_Y: begin
+                        opaddr_l_nxt = A[7:0];
+                        cpu_sm_nxt = CPU_SM_EXECUTE;
+                    end
+                    ADDR_MODE_INDIRECT_X,
+                        ADDR_MODE_INDIRECT_Y: begin
+                            opaddr_l_nxt = A[7:0];
+                            cpu_sm_nxt = CPU_SM_FETCH_IND1;
+                        end
+                    ADDR_MODE_ABS,
+                        ADDR_MODE_ABS_X,
+                        ADDR_MODE_ABS_Y: begin
+                            opaddr_l_nxt = data_in_r;
+                            pc_nxt = pc_inc;
+                            cpu_sm_nxt = CPU_SM_FETCH_I2;
+                        end
+                    default: begin
+                        // synthesis translate_off
+                        $display("[%t] CPU_SM_FETCH_I1: decode fail? %h",
+                                 $time, instr);
+                        $stop;
+                        // synthesis translate_on
+                    end
+                endcase
+            end // CPU_SM_FETCH_I1
 
-            // Store cycle for JSR low address push
-            CPU_SM_JSR2: begin
+            // Fetch second byte of operand.
+            CPU_SM_FETCH_I2: begin
+                case (addr_mode)
+                    ADDR_MODE_ABS:      A = {data_in_r, opaddr_l};
+                    ADDR_MODE_ABS_X:    A = {data_in_r, opaddr_l} + x;
+                    ADDR_MODE_ABS_Y:    A = {data_in_r, opaddr_l} + y;
+                    default: begin
+                        // synthesis translate_off
+                        $display("[%t] CPU_SM_FETCH_I2: decode fail? %h",
+                                 $time, instr);
+                        $stop;
+                        // synthesis translate_on
+                    end
+                endcase
 
-                addr = {8'h01, sp};
-                data_out = pc[7:0];
-                we = 1;
+                {opaddr_h_nxt, opaddr_l_nxt} = A;
 
-                if (rdy) begin
-                    pc_nxt = {opaddr_h, opaddr_l};
-                    sp_nxt = sp_dec;
-                    cpu_sm_nxt = CPU_SM_STALL;
-                end
-            end
+                // Hand JMP and JSR here.
+                case (instr)
+                    8'h20: begin // JSR
+                        // Push high byte of PC
+                        A = {8'h01, sp};
+                        DO = pc_dec[15:8];
+                        RW = 0;
+                        pc_nxt = pc_dec;
+                        sp_nxt = sp_dec;
+                        cpu_sm_nxt = CPU_SM_JSR1;
+                    end
+                    8'h4c: begin // JMP abs
+                        pc_nxt = {data_in_r, opaddr_l};
+                        cpu_sm_nxt = CPU_SM_STALL;
+                    end
+                    8'h6c: // JMP (ind)
+                        cpu_sm_nxt = CPU_SM_FETCH_IND1;
+                    default:
+                        cpu_sm_nxt = CPU_SM_EXECUTE;
+                endcase
+            end // CPU_SM_FETCH_I2
 
-            // Read cycle for P in RTI instruction
-            CPU_SM_RTI: begin
-                addr = {8'h01, sp_inc};
-                if (rdy) begin
-                    sp_nxt = sp_inc;
-                    p_nxt = data_in_r;
-                    p_nxt[P_B] = 0;
-                    cpu_sm_nxt = CPU_SM_RTS1;
-                end
-            end
-
-            // Read cycle for low-byte of return address in RTS/RTI
-            CPU_SM_RTS1: begin
+            // Fetch low byte of address in indirect instructions.
+            CPU_SM_FETCH_IND1: begin
+                A = {opaddr_h, opaddr_l + 1'b1};
                 opaddr_l_nxt = data_in_r;
-                addr = {8'h01, sp_inc};
-
-                if (rdy) begin
-                    sp_nxt = sp_inc;
-                    cpu_sm_nxt = CPU_SM_RTS2;
-                end
+                cpu_sm_nxt = CPU_SM_FETCH_IND2;
             end
 
-            // Read cycle for high-byte of return address in RTS/RTI.
-            CPU_SM_RTS2:
-                if (rdy) begin
-                    pc_nxt = {data_in_r, opaddr_l} + instr[5];  // add 1 if RTS (vs. RTI)
+            // Fetch high byte of address in indirect instructions.
+            CPU_SM_FETCH_IND2: begin
+                if (instr == 8'h6c) begin // JMP (ind)
+                    pc_nxt = {data_in_r, opaddr_l};
                     cpu_sm_nxt = CPU_SM_STALL;
                 end
+                else begin
+                    if (addr_mode == ADDR_MODE_INDIRECT_Y)
+                        A = {data_in_r, opaddr_l} + y;
+                    else
+                        A = {data_in_r, opaddr_l};
+                    {opaddr_h_nxt, opaddr_l_nxt} = A;
+                    cpu_sm_nxt = CPU_SM_EXECUTE;
+                end
+            end
 
-            // Store cycle for high-byte of PC during interrupt/BRK.
+            // Execute most instructions after fetching operand
+            CPU_SM_EXECUTE: begin
+                // By default, go back to decode state.  Some cases overide
+                // this.
+                instr_nxt = DI;
+                SYNC = 1;
+                pc_nxt = pc_inc;
+                cpu_sm_nxt = CPU_SM_DECODE;
+
+                casex (instr)
+                    8'b0?10_1000:       // PLA/PLP instructions
+                        if (instr[6]) begin
+                            acc_nxt = data_in_r;
+                            p_nxt = func_nzflags(p, acc_nxt);
+                        end
+                        else begin
+                            p_nxt = data_in_r;
+                            p_nxt[P_B] = 0;
+                            p_nxt[P_1] = 1;
+                        end
+
+                    8'b100?_??01: begin // STA
+                        instr_nxt = instr;
+                        SYNC = 0;
+                        A = {opaddr_h, opaddr_l};
+                        DO = acc;
+                        RW = 0;
+                        pc_nxt = pc;
+                        cpu_sm_nxt = CPU_SM_STORE;
+                    end
+
+                    8'b????_??01: begin // Group one instructions (except STA)
+                        // ALU instructions
+                        case (instr[7:5])
+                            3'b000: acc_nxt = acc | data_in_r; // OR
+                            3'b001: acc_nxt = acc & data_in_r; // AND
+                            3'b010: acc_nxt = acc ^ data_in_r; // EOR
+                            3'b011: begin // ADC
+                                if (p[P_D]) begin:bcd_adc
+                                    // Decimal mode
+                                    reg [4:0] nyb_l;
+                                    reg [4:0] nyb_h;
+
+                                    nyb_l = {1'b0, acc[3:0]} + data_in_r[3:0] +
+                                            p[P_C];
+                                    if (nyb_l > 5'd9)
+                                        nyb_l = nyb_l + 5'd6;
+                                    nyb_h = {1'b0, acc[7:4]} + data_in_r[7:4] +
+                                            nyb_l[4];
+                                    if (nyb_h > 5'd9)
+                                        nyb_h = nyb_h + 5'd6;
+                                    acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
+                                    p_nxt[P_C] = nyb_h[4];
+                                end
+                                else
+                                    {p_nxt[P_C], acc_nxt} = {1'b0, acc} +
+                                                            data_in_r + p[P_C];
+                                p_nxt[P_V] = acc[7] == data_in_r[7] &&
+                                             acc[7] != acc_nxt[7];
+                            end // ADC
+                            3'b101: // LDA
+                                acc_nxt = data_in_r; // LDA
+                            3'b110: // CMP
+                                p_nxt = func_compare(p, acc,  data_in_r);
+                            3'b111: begin // SBC
+                                if (p[P_D]) begin:bcd_sbc
+                                    // Decimal mode
+                                    reg [4:0] nyb_l;
+                                    reg [4:0] nyb_h;
+
+                                    nyb_l = {1'b0, acc[3:0]} - data_in_r[3:0] -
+                                            !p[P_C];
+                                    if (nyb_l[4])
+                                        nyb_l = nyb_l - 5'd6;
+                                    nyb_h = {1'b0, acc[7:4]} - data_in_r[7:4] -
+                                            nyb_l[4];
+                                    if (nyb_h[4])
+                                        nyb_h = nyb_h - 5'd6;
+
+                                    acc_nxt = {nyb_h[3:0], nyb_l[3:0]};
+                                    p_nxt[P_C] = ~nyb_h[4];
+                                end
+                                else begin:sbc
+                                    reg borrow;
+                                    {borrow, acc_nxt} = {1'b0, acc} -
+                                                        data_in_r - !p[P_C];
+                                    p_nxt[P_C] = ~borrow;
+                                end
+                                p_nxt[P_V] = acc[7] != data_in_r[7] &&
+                                             acc[7] != acc_nxt[7];
+                            end // SBC
+                        endcase
+
+                        // Set N and Z flags except for CMP
+                        if (instr[7:5] != 3'b110)
+                            p_nxt = func_nzflags(p_nxt, acc_nxt);
+                    end
+
+                    8'b101?_??10: begin         // LDX
+                        x_nxt = data_in_r;
+                        p_nxt = func_nzflags(p, x_nxt);
+                    end
+
+                    8'b????_??10: begin // Group two instructions (ex LDX)
+
+                        instr_nxt = instr;
+                        SYNC = 0;
+                        RW = 0;
+                        A = {opaddr_h, opaddr_l};
+
+                        case (instr[7:5])
+                            3'b000: // ASL
+                                {p_nxt[P_C], DO} = {data_in_r, 1'b0};
+                            3'b001: // ROL
+                                {p_nxt[P_C], DO} = {data_in_r, p[P_C]};
+                            3'b010: // LSR
+                                {DO, p_nxt[P_C]} = {1'b0, data_in_r};
+                            3'b011: // ROR
+                                {DO, p_nxt[P_C]} = {p[P_C], data_in_r};
+                            3'b100: // STX
+                                DO = x;
+                            3'b110: // DEC
+                                DO = data_in_r - 1;
+                            3'b111: // INC
+                                DO = data_in_r + 1;
+                        endcase
+
+                        if (instr[7:5] != 3'b100) // !STX
+                            p_nxt = func_nzflags(p_nxt, DO);
+
+                        pc_nxt = pc;
+                        cpu_sm_nxt = CPU_SM_STORE;
+                    end
+
+                    8'b????_??00:   // Group three instructions
+                        case (instr[7:5])
+                            3'b001: begin // BIT
+                                p_nxt[P_N] = data_in_r[7];
+                                p_nxt[P_V] = data_in_r[6];
+                                p_nxt[P_Z] = (acc & data_in_r) == 0;
+                            end
+                            3'b100: begin // STY
+                                SYNC = 0;
+                                instr_nxt = instr;
+                                A = {opaddr_h, opaddr_l};
+                                DO = y;
+                                RW = 0;
+                                pc_nxt = pc;
+                                cpu_sm_nxt = CPU_SM_STORE;
+                            end
+                            3'b101: begin // LDY
+                                y_nxt = data_in_r;
+                                p_nxt = func_nzflags(p, y_nxt);
+                            end
+                            3'b110: // CPY
+                                p_nxt = func_compare(p, y, data_in_r);
+                            3'b111: // CPX
+                                p_nxt = func_compare(p, x, data_in_r);
+                        endcase
+
+                    default: begin
+                        // synthesis translate_off
+                        $display("[%t] CPU_SM_EXECUTE: decode failure? %h",
+                                 $time, instr);
+                        $stop;
+                        // synthesis translate_on
+                    end
+                endcase
+            end // CPU_SM_EXECUTE
+
+            CPU_SM_STORE: begin
+                pc_nxt = pc_inc;
+                instr_nxt = DI;
+                SYNC = 1;
+                cpu_sm_nxt = CPU_SM_DECODE;
+            end
+
+            CPU_SM_JSR1: begin
+                // Push low byte of PC
+                A = {8'h01, sp};
+                DO = pc[7:0];
+                RW = 0;
+                sp_nxt = sp_dec;
+                cpu_sm_nxt = CPU_SM_JSR2;
+            end
+
+            CPU_SM_JSR2: begin
+                // Jump to address in operand.
+                pc_nxt = {opaddr_h, opaddr_l};
+                cpu_sm_nxt = CPU_SM_STALL;
+            end
+
             CPU_SM_INTR1: begin
-                addr = {8'h01, sp};
-                data_out = pc[15:8];
-                we = 1;
-
-                if (rdy) begin
-                    sp_nxt = sp_dec;
-                    cpu_sm_nxt = CPU_SM_INTR2;
-                end
+                // Push high byte of PC
+                A = {8'h01, sp};
+                DO = pc[15:8];
+                RW = 0;
+                sp_nxt = sp_dec;
+                cpu_sm_nxt = CPU_SM_INTR2;
             end
 
-            // Store cycle for low-byte of PC during interrupt/BRK.
             CPU_SM_INTR2: begin
-                addr = {8'h01, sp};
-                data_out = pc[7:0];
-                we = 1;
-
-                if (rdy) begin
-                    sp_nxt = sp_dec;
-                    cpu_sm_nxt = CPU_SM_INTR3;
-                end
+                // Push low byte of PC
+                A = {8'h01, sp};
+                DO = pc[7:0];
+                RW = 0;
+                sp_nxt = sp_dec;
+                cpu_sm_nxt = CPU_SM_INTR3;
             end
 
-            // Store cycle for P during interrupt/BRK.
             CPU_SM_INTR3: begin
-                addr = {8'h01, sp};
-                data_out = p;
-                we = 1;
-
-                if (rdy) begin
-                    pc_nxt = (do_nmi ? NMI_VEC : IRQ_VEC);
-                    sp_nxt = sp_dec;
-                    cpu_sm_nxt = CPU_SM_INTR4;
-                end
+                // Push processor status
+                A = {8'h01, sp};
+                DO = p;
+                RW = 0;
+                sp_nxt = sp_dec;
+                cpu_sm_nxt = CPU_SM_INTR4;
             end
 
             CPU_SM_INTR4: begin
+                // Read interrupt vector
+                pc_nxt = (do_nmi ? NMI_VEC : IRQ_VEC);
+                A = pc_nxt;
                 p_nxt[P_I] = 1;
                 p_nxt[P_B] = 0;
-                p_nxt[P_D] = 0;  // like a 65C02!
+                p_nxt[P_D] = 0; // like a 65c02!
+                clr_do_nmi = do_nmi;
+                pc_nxt = pc_nxt + 1;
+                cpu_sm_nxt = CPU_SM_VECTOR1;
+            end
 
-                if (rdy) begin
-                    pc_nxt = pc_inc;
-                    clr_do_nmi = do_nmi;
-                    cpu_sm_nxt = CPU_SM_VECTOR1;
-                end
+            CPU_SM_RTI:  begin
+                // Read processor status off of stack
+                A = {8'h01, sp_inc};
+                p_nxt = data_in_r;
+                p_nxt[P_B] = 0;
+                p_nxt[P_1] = 1;
+                sp_nxt = sp_inc;
+                cpu_sm_nxt = CPU_SM_RTSI1;
+            end
+
+            CPU_SM_RTSI1: begin
+                // Read low byte of return address
+                A = {8'h01, sp_inc};
+                pc_nxt[7:0] = data_in_r;
+                sp_nxt = sp_inc;
+                cpu_sm_nxt = CPU_SM_RTSI2;
+            end
+
+            CPU_SM_RTSI2: begin
+                // Read high byte of return address from stack
+                pc_nxt = {data_in_r, pc[7:0]};
+                if (instr[5]) // Increment address if RTS
+                    pc_nxt = pc_nxt + 1;
+                cpu_sm_nxt = CPU_SM_STALL;
             end
 
             default: begin
-                cpu_sm_nxt = 5'bxxxxx;
-`ifdef simulation
-                if ($time > 0.0) begin
-                    $display("[%t] cpu sm problem! cpu_sm = %h", $time, cpu_sm);
+                // synthesis translate_off
+                if (!reset) begin
+                    $display("[%t] Bad CPU SM State: %h", $time, cpu_sm);
                     $stop;
                 end
-`endif
+                // synthesis translate_on
             end
+        endcase // case (cpu_sm)
+    end // always @(*)
 
-        endcase // cpu_sm
-    end
-
-endmodule // cpu6502
+endmodule
