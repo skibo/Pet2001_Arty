@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 //
-// Copyright (c) 2017 Thomas Skibo.
-// All rights reserved.
+// Copyright (c) 2022 Thomas Skibo.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -24,7 +23,7 @@
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 //
-////////////////////
+
 //
 // This is a testbench to run Klaus Dormann's awesome 6502 test suite on
 // my 6502 implementation.
@@ -50,71 +49,105 @@
 
 module test_cpu6502;
 
-    wire [15:0] addr;
-    wire [7:0]  data_out;
-    wire        we;
-    reg [7:0]   data_in;
-    reg         rdy;
-    reg         irq;
-    reg         nmi;
-    reg         reset;
-    reg         clk;
+    reg         PHI;
+    reg         RES_;
+    reg         RDY;
+    reg         NMI_;
+    reg         IRQ_;
+    wire [7:0]   DI;
+    wire [7:0]  DO;
+    wire        RW;
+    wire        SYNC;
+    wire [15:0] A;
 
+    parameter MEMFILE = "6502_functional_test.mem";
+    parameter TESTRDY = 0;
 
     initial begin
-        rdy = 1;
-        irq = 0;
-        nmi = 0;
-        reset = 1;
-        clk = 0;
-        repeat (20) @(posedge clk);
-        reset <= 0;
+        PHI = 0;
+        RES_ = 0;
+        RDY = 1;
+        NMI_ = 1;
+        IRQ_ = 1;
+
+        repeat (5) @(posedge PHI);
+
+        RES_ <= 1;
     end
 
-    // A 1Mhz clock
-    always #500 clk = ~clk;
+    always #500 PHI = !PHI;
 
-    // Initialize memory with test.
+    cpu6502 cpu6502_0(
+                      .A(A),
+                      .RW(RW),
+                      .DO(DO),
+                      .DI(DI),
+                      .RDY(RDY),
+                      .SYNC(SYNC),
+                      .IRQ_(IRQ_),
+                      .NMI_(NMI_),
+                      .RES_(RES_),
+                      .PHI(PHI)
+                  );
+
+    // Simple memory.
     reg [7:0] mem[65535:0];
-    initial begin
-        $readmemh("6502_functional_test.mem", mem);
+    reg [7:0] dout;
 
-        // Insert start address into reset vector.
+    initial begin
+        $readmemh(MEMFILE, mem);
+
+        // Put start address in RESET vector
         mem[16'hfffc] = 8'h00;
         mem[16'hfffd] = 8'h04;
     end
 
-    // Implement memory reads and writes.
-    always @(addr)
-        data_in <= mem[addr];
-    always @(posedge clk)
-        if (we)
-            mem[addr] <= data_out;
+    always @(*)
+        dout <= mem[A];
 
-    // Detect infinite loop, either a two or three byte instruction.
-    reg [95:0] addr_321;
-    always @(posedge clk) begin
-        if (!we && !reset && addr !== addr_321[15:0]) begin
-            addr_321 = {addr_321[79:0], addr};
-            if (addr_321[95:48] == addr_321[47:0] ||
-                (addr_321[95:64] == addr_321[63:32] &&
-                 addr_321[63:32] == addr_321[31:0])) begin
-                $display("[%t] Infinite loop at %h", $time, addr_321[95:80]);
-                $stop;
+    // Only present good data when RDY is high.
+    assign DI = RDY ? dout : 8'hXX;
+
+    always @(posedge PHI)
+        if (!RW)
+            mem[A] <= DO;
+
+    generate
+        if (TESTRDY == 1) begin
+            always @(posedge PHI)
+                RDY <= $urandom;
+        end
+        else if (TESTRDY == 2) begin
+            always @(posedge PHI) begin
+                RDY <= 0;
+                repeat (3) @(posedge PHI);
+                RDY <= 1;
             end
         end
-    end
+    endgenerate
 
-    cpu6502 cpu6502_0(
-                      .addr(addr),
-                      .data_out(data_out),
-                      .we(we),
-                      .data_in(data_in),
-                      .rdy(rdy),
-                      .irq(irq),
-                      .nmi(nmi),
-                      .reset(reset),
-                      .clk(clk)
-    );
+    // Implement a magic location for setting IRQ and NMI signals.
+    always @(posedge PHI)
+        if (!RW && A == 16'hdead) begin
+            IRQ_ <= DO[0];
+            NMI_ <= DO[1];
+        end
+
+    always @(negedge IRQ_) $display("[%t] IRQ Triggered!", $time);
+
+    always @(negedge NMI_) $display("[%t] NMI Triggered!", $time);
+
+    // Detect infinite loop
+    reg [15:0] addr_last;
+    always @(posedge PHI)
+        if (SYNC && RDY && RW) begin
+            if (A == addr_last) begin
+                $display("[%t] DETECTED INFINITE LOOP: %h", $time, A);
+                $stop;
+            end
+            addr_last = A;
+        end
+
+    always #500000000 $display("Simulation Time: %d ms", $time / 1000000);
 
 endmodule // test_cpu6502
