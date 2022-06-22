@@ -63,7 +63,13 @@ module test_cpu6502;
     parameter MEMFILE = "6502_functional_test.mem";
     parameter TESTRDY = 0;
 
+    integer     cycles;
+    integer     instrs;
+
     initial begin
+        cycles = 0;
+        instrs = 0;
+
         PHI = 0;
         RES_ = 0;
         RDY = 1;
@@ -76,6 +82,13 @@ module test_cpu6502;
     end
 
     always #500 PHI = !PHI;
+
+    always @(posedge PHI)
+        if (RES_) begin
+            cycles = cycles + 1;
+            if (SYNC && RDY)
+                instrs = instrs + 1;
+        end
 
     cpu6502 cpu6502_0(
                       .A(A),
@@ -143,7 +156,8 @@ module test_cpu6502;
         if (SYNC && RDY && RW) begin
             if (A == addr_last) begin
                 $display("[%t] DETECTED INFINITE LOOP: %h", $time, A);
-                $stop;
+                $display("     cycles: %0d   instrs: %0d", cycles, instrs);
+                $finish;
             end
             addr_last = A;
         end
