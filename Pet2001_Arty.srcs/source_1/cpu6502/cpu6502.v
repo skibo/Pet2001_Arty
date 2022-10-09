@@ -120,7 +120,7 @@ module cpu6502(
     // Decode address mode of an instruction.
     function [3:0] addr_mode_func(input [7:0] instr);
         begin
-            casex (instr)
+            casez (instr)
                 8'b0000_0000:   // BRK
                     addr_mode_func = ADDR_MODE_IMMEDIATE; // close enough
                 8'b0010_0000:   // JSR
@@ -165,17 +165,22 @@ module cpu6502(
                                 addr_mode_func = ADDR_MODE_ABS_X;
                         default: begin
                             // synthesis translate_off
-                            $display("[%t] Instruction decode fail? %h", $time,
-                                     instr);
-                            $stop;
+                            if (!reset) begin
+                                $display("[%t] Instruction decode fail? %h",
+                                         $time, instr);
+                                $stop;
+                            end
                             // synthesis translate_on
                         end
                     endcase // case (instr[4:2])
                 default: begin
                     addr_mode_func = 4'hX;
                     // synthesis translate_off
-                    $display("[%t] Instruction decode fail? %h", $time, instr);
-                    $stop;
+                    if (!reset) begin
+                        $display("[%t] Instruction decode fail? %h", $time,
+                                 instr);
+                        $stop;
+                    end
                     // synthesis translate_on
                 end
             endcase // case (instr)
@@ -348,7 +353,7 @@ module cpu6502(
                 end
                 else begin
                     pc_nxt = pc_inc;
-                    casex (instr)
+                    casez (instr)
                         8'b0000_0000: begin     // BRK
                             p_nxt[P_B] = 1;
                             cpu_sm_nxt = CPU_SM_INTR1;
@@ -446,6 +451,7 @@ module cpu6502(
                                     x_nxt = x - 1;
                                     p_nxt = func_nzflags(p, x_nxt);
                                 end
+                                default: ;
                             endcase
                             instr_nxt = DI;
                             SYNC = 1;
@@ -489,9 +495,11 @@ module cpu6502(
 
                         default: begin
                             // synthesis translate_off
-                            $display("[%t] Instruction decode fail? %h",
-                                     $time, instr);
-                            $stop;
+                            if (!reset) begin
+                                $display("[%t] Instruction decode fail? %h",
+                                         $time, instr);
+                                $stop;
+                            end
                             // synthesis translate_on
                         end
                     endcase // case (instr)
@@ -532,6 +540,7 @@ module cpu6502(
                     ADDR_MODE_ZEROPG_Y:     A = {8'h00, data_in_r + y};
                     ADDR_MODE_INDIRECT_X:   A = {8'h00, data_in_r + x};
                     ADDR_MODE_INDIRECT_Y:   A = {8'h00, data_in_r};
+                    default: ;
                 endcase
 
                 case (addr_mode)
@@ -555,9 +564,11 @@ module cpu6502(
                         end
                     default: begin
                         // synthesis translate_off
-                        $display("[%t] CPU_SM_FETCH_I1: decode fail? %h",
-                                 $time, instr);
-                        $stop;
+                        if (!reset) begin
+                            $display("[%t] CPU_SM_FETCH_I1: decode fail? %h",
+                                     $time, instr);
+                            $stop;
+                        end
                         // synthesis translate_on
                     end
                 endcase
@@ -571,9 +582,11 @@ module cpu6502(
                     ADDR_MODE_ABS_Y:    A = {data_in_r, opaddr_l} + y;
                     default: begin
                         // synthesis translate_off
-                        $display("[%t] CPU_SM_FETCH_I2: decode fail? %h",
-                                 $time, instr);
-                        $stop;
+                        if (!reset) begin
+                            $display("[%t] CPU_SM_FETCH_I2: decode fail? %h",
+                                     $time, instr);
+                            $stop;
+                        end
                         // synthesis translate_on
                     end
                 endcase
@@ -634,7 +647,7 @@ module cpu6502(
                 pc_nxt = pc_inc;
                 cpu_sm_nxt = CPU_SM_DECODE;
 
-                casex (instr)
+                casez (instr)
                     8'b0?10_1000:       // PLA/PLP instructions
                         if (instr[6]) begin
                             acc_nxt = data_in_r;
@@ -716,6 +729,7 @@ module cpu6502(
                                 p_nxt[P_V] = acc[7] != data_in_r[7] &&
                                              acc[7] != acc_nxt[7];
                             end // SBC
+                            default: ;
                         endcase
 
                         // Set N and Z flags except for CMP
@@ -750,6 +764,7 @@ module cpu6502(
                                 DO = data_in_r - 1;
                             3'b111: // INC
                                 DO = data_in_r + 1;
+                            default: ;
                         endcase
 
                         if (instr[7:5] != 3'b100) // !STX
@@ -783,13 +798,16 @@ module cpu6502(
                                 p_nxt = func_compare(p, y, data_in_r);
                             3'b111: // CPX
                                 p_nxt = func_compare(p, x, data_in_r);
+                            default: ;
                         endcase
 
                     default: begin
                         // synthesis translate_off
-                        $display("[%t] CPU_SM_EXECUTE: decode failure? %h",
-                                 $time, instr);
-                        $stop;
+                        if (!reset) begin
+                            $display("[%t] CPU_SM_EXECUTE: decode failure? %h",
+                                     $time, instr);
+                            $stop;
+                        end
                         // synthesis translate_on
                     end
                 endcase

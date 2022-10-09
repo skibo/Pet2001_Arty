@@ -227,14 +227,14 @@ module pet2001hw #(parameter CLKDIV = 50)
     // Read data mux (to CPU)
     /////////////////////////////////////
     always @(*)
-        casex (addr[15:11])
+        casez (addr[15:11])
             5'b1110_1:                          // E800
                 data_out = io_read_data;
-            5'b11xx_x:                          // C000-FFFF
+            5'b11??_?:                          // C000-FFFF
                 data_out = rom_data;
             5'b1000_0:                          // 8000-87FF
                 data_out = vram_data;
-            5'b0xxx_x:                          // 0000-7FFF
+            5'b0???_?:                          // 0000-7FFF
                 data_out = ram_data;
             default:
                 data_out = 8'h55;

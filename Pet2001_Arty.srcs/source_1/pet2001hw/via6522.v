@@ -499,7 +499,7 @@ module via6522(output reg [7:0] data_out,       // cpu interface
     always @(posedge clk)
         if (reset)
             cb1_out <= 1'b1;
-        else if (do_shift && acr[3:2] != 3'b11)
+        else if (do_shift && acr[3:2] != 2'b11)
             cb1_out <= !cb1_out;
 
     ////////////////////////////////////////////////////////
@@ -543,7 +543,6 @@ module via6522(output reg [7:0] data_out,       // cpu interface
             ADDR_IFR:                   data_out = {irq_p, ifr};
             ADDR_SR:                    data_out = sr;
             ADDR_PORTA_NH:              data_out = porta;
-            default:                    data_out = 8'hXX;
         endcase
 
 endmodule // via6522

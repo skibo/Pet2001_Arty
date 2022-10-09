@@ -185,10 +185,10 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
     // register I/O stuff, therefore RDY must be delayed a cycle!
     //
     always @(posedge clk)
-        casex (addr[10:2])
+        casez (addr[10:2])
             9'b000_0001_00:     data_out <= pia1_data_out;
             9'b000_0010_00:     data_out <= pia2_data_out;
-            9'b000_0100_xx:     data_out <= via_data_out;
+            9'b000_0100_??:     data_out <= via_data_out;
             default:            data_out <= 8'hXX;
         endcase
 
