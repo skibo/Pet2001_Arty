@@ -1,10 +1,11 @@
+`timescale 1ns / 1ps
 ////////////////
 //
 // petvid.v
 //
 //  Incomplete and crude simulation of Commodore PET video logic.  I hastily
 //  coded these models for 7400-series TTL chips and so they should not be
-//  relied upon as acurate!
+//  relied upon as accurate!
 //
 //  This simulation is derived from the PET schematic found at:
 // ftp://www.zimmers.net/pub/cbm/firmware/computers/pet/schematics/2001/320008-3.gif
@@ -18,8 +19,7 @@
 ////////////////
 
 //
-// Copyright (c) 2015, 2017  Thomas Skibo. <thomas@skibo.net>
-// All rights reserved.
+// Copyright (c) 2015, 2017  Thomas Skibo. <ThomasSkibo@yahoo.com>
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -86,9 +86,9 @@ module c7493(output reg qa, // pin 12
         qd = 0;
     end
 
-    always @(r01 or r02)
+    always @(*)
         if (r01 && r02)
-            {qd, qc, qb, qa} <= 4'b0000;
+            {qd, qc, qb, qa} = 4'b0000;
 
     always @(negedge cka)
         if (!r01 || !r02)
@@ -133,11 +133,11 @@ module l74100(output reg q1,
 
     always @(*)
         if (g1)
-            {q4, q3, q2, q1} <= {d4, d3, d2, d1};
+            {q4, q3, q2, q1} = {d4, d3, d2, d1};
 
     always @(*)
         if (g2)
-            {q8, q7, q6, q5} <= {d8, d7, d6, d5};
+            {q8, q7, q6, q5} = {d8, d7, d6, d5};
 
 endmodule // l74100
 
@@ -236,13 +236,14 @@ module c74165(output      q,
               input       clk);
 
     reg [7:0]   sr;
-    wire        clk2 = clk && clk_inh;
 
-    always @(negedge ld_ or posedge clk2)
+    always @(negedge ld_ or D)
         if (!ld_)
             sr <= D;
-        else
-            sr <= {D[6:0], ser};
+
+    always @(posedge clk)
+        if (ld_ && !clk_inh)
+            sr <= {sr[6:0], ser};
 
     assign q = sr[7];
     assign q_ = ~sr[7];
