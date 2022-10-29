@@ -285,11 +285,6 @@ module petvid;
     initial clk8mhz = 1'b0;
     always #62.5 clk8mhz = ~clk8mhz;
 
-    // 1MHZ clock? XXX
-    reg     B02;
-    initial B02 = 1'b0;
-    always #1000.0 B02 = ~B02;
-
     // External signals
     reg [9:0]   BA;     // address from other board ???
     wire [7:0]   BD;    // data to/from other board???
@@ -306,7 +301,7 @@ module petvid;
     end
 
     // clock is output of E2 pin 6 (NAND)
-    wire    e2_6 = clk8mhz;
+    wire        e2_6 = !clk8mhz;
     wire        tp3_2 = 1'b1;
     wire        d9_6 = !tp3_2;
 
@@ -316,7 +311,10 @@ module petvid;
     wire        c8_2, c8_3;
     wire        d8_8 = !(e2_6 && c8_3); // NAND at D8
 
-    wire        c8_5, c8_6;
+    wire        c8_5, phi0;
+    wire        phi1 = !phi0; // XXX: just an approximation of phi1 and phi2
+    wire        phi2 = phi0;
+    wire        bphi2 = phi2; // "buffered phi2", looks like B02 on schematic.
 
     wire        c7_2, c7_3;
 
@@ -408,7 +406,7 @@ module petvid;
             .clk(c9_11));
 
     jk c8_b(.q(c8_5),
-            .q_(c8_6),
+            .q_(phi0),
             .j(c9_11),
             .k(!c9_11),
             .c_(tp3_2),
@@ -565,7 +563,7 @@ module petvid;
     c6550s c3c4(.DB(SD),
                 .A(SA),
                 .RW(d2_7),
-                .clk(B02));
+                .clk(bphi2));
 
     c74165 b2(.q(b2_9),
               .q_(b2_7),
