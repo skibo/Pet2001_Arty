@@ -264,10 +264,6 @@ module c6550s(output [7:0] DB,
               input        clk);
 
     reg [7:0]   mem[1023:0];
-    integer     i;
-    initial
-        for (i = 0; i < 1024; i = i + 1)
-            mem[i] = i & 255;
 
     always @(posedge clk)
         if (!RW)
@@ -286,22 +282,81 @@ module petvid;
     always #62.5 clk8mhz = ~clk8mhz;
 
     // External signals
-    reg [9:0]   BA;     // address from other board ???
-    wire [7:0]   BD;    // data to/from other board???
-    reg         selb;   // signal from right on page
+    reg [9:0]   BA;     // address from other schematic page
+    wire [7:0]  BD;     // data to/from other schematic page
+    reg [7:0]   wrdata; // for simulating video RAM writes.
+    reg         sel8;   // signal from right on page
     reg         rnw_ne; // signal from right on page
     reg         graphic;
     reg         blanktv;
     initial begin
-        BA = 10'h3a5;
-        selb = 0;
+        BA = 10'd0;
+        sel8 = 0;
         rnw_ne = 1;
         graphic = 0;
-        blanktv = 1;
     end
 
-    // clock is output of E2 pin 6 (NAND)
-    wire        e2_6 = !clk8mhz;
+    // Drive BD from processor board.
+    assign BD = (sel8 && !rnw_ne) ? wrdata : 8'hZZ;
+
+    // Task to emulate cpu writing video memory.
+    task wrmem(input [9:0] a,
+               input [7:0] d);
+        begin
+            @(negedge phi2);
+            BA <= a;
+            wrdata = d;
+            sel8 <= 1;
+            rnw_ne <= 0;
+
+            @(negedge phi2);
+            sel8 <= 0;
+            rnw_ne <= 1;
+
+            @(posedge phi2);
+        end
+    endtask
+
+    // Emulate cpu clearing screen and opening banner.
+    initial begin:clrscrn
+        integer i;
+
+        @(posedge phi0);
+        blanktv = 0;
+
+        for (i = 0; i < 1024; i = i + 1)
+            wrmem(10'd000 + i, 8'h20);
+
+        blanktv = 1;
+
+        // Time these writes to see snow effect.
+        repeat (3000) @(posedge phi0);
+
+        wrmem(10'h000, 8'h2a);	// *
+        wrmem(10'h001, 8'h2a);	// *
+        wrmem(10'h002, 8'h2a);	// *
+        wrmem(10'h004, 8'h03);	// C
+        wrmem(10'h005, 8'h0f);	// O
+        wrmem(10'h006, 8'h0d);	// M
+        wrmem(10'h007, 8'h0d);	// M
+        wrmem(10'h008, 8'h0f);	// O
+        wrmem(10'h009, 8'h04);	// D
+        wrmem(10'h00a, 8'h0f);	// O
+        wrmem(10'h00b, 8'h12);	// R
+        wrmem(10'h00c, 8'h05);	// E
+        wrmem(10'h00e, 8'h02);	// B
+        wrmem(10'h00f, 8'h01);	// A
+        wrmem(10'h010, 8'h13);	// S
+        wrmem(10'h011, 8'h09);	// I
+        wrmem(10'h012, 8'h03);	// C
+        wrmem(10'h014, 8'h2a);	// *
+        wrmem(10'h015, 8'h2a);	// *
+        wrmem(10'h016, 8'h2a);	// *
+
+    end
+
+    // clock is output of E2 pin 6 (AND)
+    wire        e2_6 = clk8mhz;
     wire        tp3_2 = 1'b1;
     wire        d9_6 = !tp3_2;
 
@@ -347,7 +402,7 @@ module petvid;
 
     wire        c2_8 = !(c7_2 && b1_8); // NAND
 
-    wire        c2_11 = !(selb && rnw_ne); // NAND
+    wire        c2_11 = !(sel8 && rnw_ne); // NAND
 
     wire [9:0]  SA;
     wire        d2_7, d2_4; // d2_4 is a no-connect
@@ -359,11 +414,11 @@ module petvid;
     wire [7:0]  charromd;
     wire        c2_3 = !(b2_9 && c1_9);     // NAND
     wire        c2_6 = !(b2_7 && c1_8);     // NAND
-    wire        e2_3 = !(c2_6 && c2_3);     // OR with inverted inputs
+    wire        e2_3 = (c2_6 && c2_3);      // OR with inverted inputs XXX
 
     wire        vert_drive = !(b6_6 && b6_2); // NAND at D8_11
     wire        horz_drive = c5_2;
-    wire        video_on = b6_5 && b6_3; // AND at C6_8
+    wire        video_on = b6_5 && b6_3; // AND at C6_8, also called SYNC
 
     // Big NAND at E9
     wire        video_drive = !(video_on && blanktv && e2_3 && dis_on);
@@ -510,39 +565,40 @@ module petvid;
               .g1(c2_8),
               .g2(c2_8));
 
+    // Video RAM address MUXes
     c74157 d2(.Y({SA[1:0], d2_7, d2_4}),
               .A({d5_3, d5_5, 2'b11}),
-              .B({BA[1:0], 2'b11}),
-              .S(selb),
+              .B({BA[1:0], rnw_ne, 1'b1}),
+              .S(sel8),
               .G_(1'b0));
 
     c74157 d3(.Y(SA[5:2]),
               .A({d6_12, d6_2, d6_9, d6_5}),
               .B(BA[5:2]),
-              .S(selb),
+              .S(sel8),
               .G_(1'b0));
 
     c74157 d4(.Y(SA[9:6]),
               .A({d7_12, d7_2, d7_9, d7_5}),
               .B(BA[9:6]),
-              .S(selb),
+              .S(sel8),
               .G_(1'b0));
 
     // Video data bus drivers
-    h74244 b3_a(.Y(SD[3:0]),
-                .A(BD[3:0]),
+    h74244 b3_a(.Y(BD[3:0]),
+                .A(SD[3:0]),
                 .G_(c2_11));
 
-    h74244 b3_b(.Y(BD[3:0]),
-                .A(SD[3:0]),
+    h74244 b3_b(.Y(SD[3:0]),
+                .A(BD[3:0]),
                 .G_(d2_7));
 
-    h74244 b4_a(.Y(SD[7:4]),
-                .A(BD[7:4]),
+    h74244 b4_a(.Y(BD[7:4]),
+                .A(SD[7:4]),
                 .G_(c2_11));
 
-    h74244 b4_b(.Y(BD[7:4]),
-                .A(SD[7:4]),
+    h74244 b4_b(.Y(SD[7:4]),
+                .A(BD[7:4]),
                 .G_(d2_7));
 
     h7474 c1_a(.q(c1_5),
@@ -565,6 +621,7 @@ module petvid;
                 .RW(d2_7),
                 .clk(bphi2));
 
+    // Shift register for pixels
     c74165 b2(.q(b2_9),
               .q_(b2_7),
               .D(charromd),
