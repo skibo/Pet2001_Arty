@@ -285,15 +285,16 @@ module petvid;
     reg [9:0]   BA;     // address from other schematic page
     wire [7:0]  BD;     // data to/from other schematic page
     reg [7:0]   wrdata; // for simulating video RAM writes.
-    reg         sel8;   // signal from right on page
-    reg         rnw_ne; // signal from right on page
-    reg         graphic;
-    reg         blanktv;
+    reg         sel8;   // signal from right on page, address select video ram
+    reg         rnw_ne; // signal from right on page, read/write_ video ram
+    reg         graphic; // controls character set, from VIA.lCA2
+    reg         blanktv; // set low to turn off video, from PIA1.CA2.
     initial begin
-        BA = 10'd0;
+        BA = 10'bxx_xxxx_xxxx;
         sel8 = 0;
         rnw_ne = 1;
         graphic = 0;
+        blanktv = 1;
     end
 
     // Drive BD from processor board.
@@ -307,9 +308,12 @@ module petvid;
             BA <= a;
             wrdata = d;
             sel8 <= 1;
+
+            @(negedge phi2);
             rnw_ne <= 0;
 
             @(negedge phi2);
+            BA <= 10'bxx_xxxx_xxxx;
             sel8 <= 0;
             rnw_ne <= 1;
 
@@ -317,10 +321,27 @@ module petvid;
         end
     endtask
 
-    // Emulate cpu clearing screen and opening banner.
+    // Task to emulate cpu reading video memory.  Data ignored.
+    task rdmem(input [9:0] a);
+        begin
+            @(negedge phi2);
+            BA <= a;
+            sel8 <= 1;
+
+            @(negedge phi2);
+            BA <= 10'bxx_xxxx_xxxx;
+            sel8 <= 0;
+
+            @(posedge phi2);
+        end
+    endtask
+
     initial begin:clrscrn
         integer i;
 
+        repeat (3000) @(posedge phi0);
+
+        // Emulate cpu clearing screen and writing opening banner.
         @(posedge phi0);
         blanktv = 0;
 
@@ -330,7 +351,7 @@ module petvid;
         blanktv = 1;
 
         // Time these writes to see snow effect.
-        repeat (3000) @(posedge phi0);
+        repeat (1000) @(posedge phi0);
 
         wrmem(10'h000, 8'h2a);	// *
         wrmem(10'h001, 8'h2a);	// *
@@ -353,6 +374,9 @@ module petvid;
         wrmem(10'h015, 8'h2a);	// *
         wrmem(10'h016, 8'h2a);	// *
 
+        // This read creates snow effect too.
+        repeat (100) @(posedge phi0);
+        rdmem(10'h016);
     end
 
     // clock is output of E2 pin 6 (AND)
