@@ -19,7 +19,7 @@
 ////////////////
 
 //
-// Copyright (c) 2015, 2017  Thomas Skibo. <ThomasSkibo@yahoo.com>
+// Copyright (c) 2015, 2017, 2022  Thomas Skibo. <ThomasSkibo@yahoo.com>
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -343,36 +343,36 @@ module petvid;
 
         // Emulate cpu clearing screen and writing opening banner.
         @(posedge phi0);
-        blanktv = 0;
+        blanktv <= 0;
 
         for (i = 0; i < 1024; i = i + 1)
             wrmem(10'd000 + i, 8'h20);
 
-        blanktv = 1;
+        blanktv <= 1;
 
         // Time these writes to see snow effect.
         repeat (1000) @(posedge phi0);
 
-        wrmem(10'h000, 8'h2a);	// *
-        wrmem(10'h001, 8'h2a);	// *
-        wrmem(10'h002, 8'h2a);	// *
-        wrmem(10'h004, 8'h03);	// C
-        wrmem(10'h005, 8'h0f);	// O
-        wrmem(10'h006, 8'h0d);	// M
-        wrmem(10'h007, 8'h0d);	// M
-        wrmem(10'h008, 8'h0f);	// O
-        wrmem(10'h009, 8'h04);	// D
-        wrmem(10'h00a, 8'h0f);	// O
-        wrmem(10'h00b, 8'h12);	// R
-        wrmem(10'h00c, 8'h05);	// E
-        wrmem(10'h00e, 8'h02);	// B
-        wrmem(10'h00f, 8'h01);	// A
-        wrmem(10'h010, 8'h13);	// S
-        wrmem(10'h011, 8'h09);	// I
-        wrmem(10'h012, 8'h03);	// C
-        wrmem(10'h014, 8'h2a);	// *
-        wrmem(10'h015, 8'h2a);	// *
-        wrmem(10'h016, 8'h2a);	// *
+        wrmem(10'h000, 8'h2a);  // *
+        wrmem(10'h001, 8'h2a);  // *
+        wrmem(10'h002, 8'h2a);  // *
+        wrmem(10'h004, 8'h03);  // C
+        wrmem(10'h005, 8'h0f);  // O
+        wrmem(10'h006, 8'h0d);  // M
+        wrmem(10'h007, 8'h0d);  // M
+        wrmem(10'h008, 8'h0f);  // O
+        wrmem(10'h009, 8'h04);  // D
+        wrmem(10'h00a, 8'h0f);  // O
+        wrmem(10'h00b, 8'h12);  // R
+        wrmem(10'h00c, 8'h05);  // E
+        wrmem(10'h00e, 8'h02);  // B
+        wrmem(10'h00f, 8'h01);  // A
+        wrmem(10'h010, 8'h13);  // S
+        wrmem(10'h011, 8'h09);  // I
+        wrmem(10'h012, 8'h03);  // C
+        wrmem(10'h014, 8'h2a);  // *
+        wrmem(10'h015, 8'h2a);  // *
+        wrmem(10'h016, 8'h2a);  // *
 
         // This read creates snow effect too.
         repeat (100) @(posedge phi0);
@@ -386,6 +386,7 @@ module petvid;
 
     // Nets are named after their driver.
     wire        c9_8, c9_11, c9_12;
+    wire        d9_4 = !c9_11;
 
     wire        c8_2, c8_3;
     wire        d8_8 = !(e2_6 && c8_3); // NAND at D8
@@ -442,13 +443,13 @@ module petvid;
 
     wire        vert_drive = !(b6_6 && b6_2); // NAND at D8_11
     wire        horz_drive = c5_2;
-    wire        video_on = b6_5 && b6_3; // AND at C6_8, also called SYNC
+    wire        sync = b6_5 && b6_3;    // AND at C6_8, also called video_on
 
     // Big NAND at E9
-    wire        video_drive = !(video_on && blanktv && e2_3 && dis_on);
+    wire        video_drive = !(sync && blanktv && e2_3 && dis_on);
 
     // This bus does not appear on schematic but it represents the
-    // video address fed to address registers.
+    // video address fed to address multiplexers.
     wire [9:0] vaddr = { d7_12, d7_2, d7_9, d7_5,
                          d6_12, d6_2, d6_9, d6_5,
                          d5_3, d5_5};
@@ -487,7 +488,7 @@ module petvid;
     jk c8_b(.q(c8_5),
             .q_(phi0),
             .j(c9_11),
-            .k(!c9_11),
+            .k(d9_4),
             .c_(tp3_2),
             .clk(e2_6));
 
@@ -661,8 +662,10 @@ module petvid;
 
     // Logic at very bottom of page.
     assign        e8_6 = !(e6_8 && e6_9 && e6_18 && e6_17);
-    assign        e8_8 = !(d7_5 && a1_11 && !video_on);
-    assign        d8_3 = !(e6_4 && !e8_6);
+    assign        e5_10 = !e8_6;
+    assign        e5_12 = !sync;
+    assign        e8_8 = !(d7_5 && a1_11 && e5_12);
+    assign        d8_3 = !(e6_4 && e5_10);
     assign        d8_6 = !(d8_3 && e8_8);
 
     c7493 a1(.qa(),
