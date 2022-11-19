@@ -418,6 +418,7 @@ module petvid;
 
     wire        c6_11 = dis_off && d8_6; // AND at C6
 
+    wire        e5_10, e5_12;
     wire        e6_5, e6_4, e6_19, e6_20;
     wire        e6_8, e6_9, e6_18, e6_17;
     wire        e8_6, e8_8;
