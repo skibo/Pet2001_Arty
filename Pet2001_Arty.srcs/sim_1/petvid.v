@@ -289,6 +289,7 @@ module petvid;
     reg         rnw_ne; // signal from right on page, read/write_ video ram
     reg         graphic; // controls character set, from VIA.lCA2
     reg         blanktv; // set low to turn off video, from PIA1.CA2.
+    wire        phi2;    // 6502 PHI 2 clock
     initial begin
         BA = 10'bxx_xxxx_xxxx;
         sel8 = 0;
@@ -339,10 +340,10 @@ module petvid;
     initial begin:clrscrn
         integer i;
 
-        repeat (3000) @(posedge phi0);
+        repeat (3000) @(posedge phi2);
 
         // Emulate cpu clearing screen and writing opening banner.
-        @(posedge phi0);
+        @(posedge phi2);
         blanktv <= 0;
 
         for (i = 0; i < 1024; i = i + 1)
@@ -351,7 +352,7 @@ module petvid;
         blanktv <= 1;
 
         // Time these writes to see snow effect.
-        repeat (1000) @(posedge phi0);
+        repeat (1000) @(posedge phi2);
 
         wrmem(10'h000, 8'h2a);  // *
         wrmem(10'h001, 8'h2a);  // *
@@ -375,7 +376,7 @@ module petvid;
         wrmem(10'h016, 8'h2a);  // *
 
         // This read creates snow effect too.
-        repeat (100) @(posedge phi0);
+        repeat (100) @(posedge phi2);
         rdmem(10'h016);
     end
 
@@ -393,7 +394,7 @@ module petvid;
 
     wire        c8_5, phi0;
     wire        phi1 = !phi0; // XXX: just an approximation of phi1 and phi2
-    wire        phi2 = phi0;
+    assign      phi2 = phi0;
     wire        bphi2 = phi2; // "buffered phi2", looks like B02 on schematic.
 
     wire        c7_2, c7_3;
