@@ -138,7 +138,7 @@ module pet2001hw #(parameter CLKDIV = 50)
     wire [9:0]  video_addr;
 
     wire        ram_we = we && !addr[15];
-    wire        vram_we = we && (addr[15:11] == 5'b1000_0);
+    wire        vram_we = we && (addr[15:12] == 4'b1000);
 
     pet2001ram ram(.data_out(ram_data),
                    .data_in(data_in),
