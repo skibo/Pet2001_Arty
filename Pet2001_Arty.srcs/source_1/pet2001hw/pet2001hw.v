@@ -282,7 +282,7 @@ module pet2001hw #(parameter CLKDIV = 50)
                 data_out = io_read_data;
             5'b11??_?:                          // C000-FFFF
                 data_out = rom_data;
-            5'b1000_0:                          // 8000-87FF
+            5'b1000_?:                          // 8000-8FFF
                 data_out = vram_data;
             5'b0???_?:                          // 0000-7FFF
                 data_out = ram_data;
