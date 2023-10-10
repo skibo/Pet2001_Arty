@@ -73,6 +73,7 @@ module pet2001_top(
     wire [7:0]          DI;
     wire                RW;
     wire                RDY;
+    wire                SYNC;
 
     wire                nmi;
     wire                NMI_ = !nmi;
@@ -85,7 +86,7 @@ module pet2001_top(
                 .DO(DO),
                 .DI(DI),
                 .RDY(RDY),
-                .SYNC(),
+                .SYNC(SYNC),
                 .IRQ_(IRQ_),
                 .NMI_(NMI_),
                 .PHI(clk),
