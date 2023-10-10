@@ -188,6 +188,41 @@ module pet2001hw #(parameter CLKDIV = 50)
             );
 
     ////////////////////////////////////////////////////////
+    // IEEE hardware
+    ////////////////////////////////////////////////////////
+    wire [7:0]  ieee_do;
+    wire [7:0]  ieee_di;
+    wire        ieee_atn_o;
+    wire        ieee_atn_i;
+    wire        ieee_ndac_o;
+    wire        ieee_ndac_i;
+    wire        ieee_nrfd_o;
+    wire        ieee_nrfd_i;
+    wire        ieee_dav_o;
+    wire        ieee_dav_i;
+    wire        ieee_srq_i;
+    wire        ieee_eoi_o;
+    wire        ieee_eoi_i;
+
+    pet2001ieee ieee(.ieee_do(ieee_do),
+                     .ieee_di(ieee_di),
+                     .ieee_atn_o(ieee_atn_o),
+                     .ieee_atn_i(ieee_atn_i),
+                     .ieee_ndac_o(ieee_ndac_o),
+                     .ieee_ndac_i(ieee_ndac_i),
+                     .ieee_nrfd_o(ieee_nrfd_o),
+                     .ieee_nrfd_i(ieee_nrfd_i),
+                     .ieee_dav_o(ieee_dav_o),
+                     .ieee_dav_i(ieee_dav_i),
+                     .ieee_srq_i(ieee_srq_i),
+                     .ieee_eoi_o(ieee_eoi_o),
+                     .ieee_eoi_i(ieee_eoi_i),
+
+                     .clk(clk),
+                     .reset(reset)
+             );
+
+    ////////////////////////////////////////////////////////
     // I/O hardware
     ////////////////////////////////////////////////////////
     wire [7:0]  io_read_data;
@@ -211,9 +246,24 @@ module pet2001hw #(parameter CLKDIV = 50)
 
                  .cass_motor_n(cass_motor_n),
                  .cass_write(cass_write),
-                 .audio(audio),
                  .cass_sense_n(cass_sense_n),
                  .cass_read(cass_read),
+
+                 .ieee_do(ieee_do),
+                 .ieee_di(ieee_di),
+                 .ieee_atn_o(ieee_atn_o),
+                 .ieee_atn_i(ieee_atn_i),
+                 .ieee_ndac_o(ieee_ndac_o),
+                 .ieee_ndac_i(ieee_ndac_i),
+                 .ieee_nrfd_o(ieee_nrfd_o),
+                 .ieee_nrfd_i(ieee_nrfd_i),
+                 .ieee_dav_o(ieee_dav_o),
+                 .ieee_dav_i(ieee_dav_i),
+                 .ieee_srq_i(ieee_srq_i),
+                 .ieee_eoi_o(ieee_eoi_o),
+                 .ieee_eoi_i(ieee_eoi_i),
+
+                 .audio(audio),
 
                  .diag_l(diag_l),
 

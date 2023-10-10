@@ -66,6 +66,20 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
                  input        cass_sense_n,
                  input        cass_read,
 
+                 output [7:0] ieee_do,          // IEEE interface
+                 input [7:0]  ieee_di,
+                 output       ieee_atn_o,
+                 input        ieee_atn_i,
+                 output       ieee_ndac_o,
+                 input        ieee_ndac_i,
+                 output       ieee_nrfd_o,
+                 input        ieee_nrfd_i,
+                 output       ieee_dav_o,
+                 input        ieee_dav_i,
+                 input        ieee_srq_i,
+                 output       ieee_eoi_o,
+                 input        ieee_eoi_i,
+
                  output       audio,            // CB2 audio
 
                  input        diag_l,           // diag jumper input
@@ -83,7 +97,8 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
     wire [7:0]  pia1_data_out;
     wire        pia1_irq;
     wire [7:0]  pia1_porta_out;
-    wire [7:0]  pia1_porta_in = {diag_l, 2'b00, cass_sense_n, 4'b0000};
+    wire [7:0]  pia1_porta_in = {diag_l, ieee_eoi_i, 1'b0, cass_sense_n,
+                                 4'b0000};
     wire        pia1_ca1_in = cass_read;
     wire        pia1_ca2_out;
 
@@ -112,6 +127,7 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
          );
 
     assign video_blank = !pia1_ca2_out;
+    assign ieee_eoi_o = pia1_ca2_out;
     assign keyrow = pia1_porta_out[3:0];
 
     ////////////////////////// 6520 PIA2 ////////////////////////////////////
@@ -128,17 +144,17 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
 
                  .irq(pia2_irq),
                  .porta_out(),
-                 .porta_in(8'h00),
-                 .portb_out(),
-                 .portb_in(8'h00),
+                 .porta_in(ieee_di),
+                 .portb_out(ieee_do),
+                 .portb_in(ieee_do),
 
-                 .ca1_in(1'b0),
-                 .ca2_out(),
-                 .ca2_in(1'b0),
+                 .ca1_in(ieee_atn_i),
+                 .ca2_out(ieee_ndac_o),
+                 .ca2_in(ieee_ndac_o),
 
-                 .cb1_in(1'b0),
-                 .cb2_out(),
-                 .cb2_in(1'b0),
+                 .cb1_in(ieee_srq_i),
+                 .cb2_out(ieee_dav_o),
+                 .cb2_in(ieee_dav_o),
 
                  .clk(clk),
                  .reset(reset)
@@ -150,7 +166,8 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
     wire [7:0]  via_data_out;
     wire        via_irq;
     wire [7:0]  via_portb_out;
-    wire [7:0]  via_portb_in = {2'b00, video_sync, 5'b0_0000};
+    wire [7:0]  via_portb_in = {ieee_dav_i, ieee_nrfd_i, video_sync, 4'b0000,
+                                ieee_ndac_i};
 
     via6522 via(.data_out(via_data_out),
                 .data_in(data_in),
@@ -179,6 +196,8 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
                 .reset(reset)
         );
 
+    assign ieee_nrfd_o =        via_portb_out[1];
+    assign ieee_atn_o =         via_portb_out[2];
     assign cass_write =         via_portb_out[3];
 
     /////////////// Read data mux /////////////////////////
