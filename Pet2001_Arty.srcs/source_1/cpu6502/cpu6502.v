@@ -145,27 +145,32 @@ module cpu6502(
 
             p_new = p_old;
 
+            {carry, result} = {1'b0, operand1} + operand2 + p_old[P_C];
+
             if (p_old[P_D]) begin:bcd_adc
                 // Decimal mode. Flags are weird.
                 reg [4:0] nyb_l;
                 reg [4:0] nyb_h;
 
+                p_new[P_Z] = (result == 8'h00);
+
                 nyb_l = {1'b0, operand1[3:0]} + operand2[3:0] + p_old[P_C];
-                p_new[P_Z] = nyb_l[3:0] == 4'h0;
-                if (nyb_l > 5'd9)
-                    nyb_l = nyb_l + 5'd6;
+                if (nyb_l > 5'h19)
+                    nyb_l = nyb_l - 5'h0a;
+                else if (nyb_l > 5'h09)
+                    nyb_l = nyb_l + 5'h06;
                 nyb_h = {1'b0, operand1[7:4]} + operand2[7:4] + nyb_l[4];
-                p_new[P_Z] = p_new[P_Z] && nyb_h[3:0] == 4'h0;
                 p_new[P_N] = nyb_h[3];
                 p_new[P_V] = operand1[7] == operand2[7] &&
                              operand1[7] != nyb_h[3];
-                if (nyb_h > 5'd9)
-                    nyb_h = nyb_h + 5'd6;
+                if (nyb_h > 5'h19)
+                    nyb_h = nyb_h - 5'h0a;
+                else if (nyb_h > 5'h09)
+                    nyb_h = nyb_h + 5'h06;
                 result = {nyb_h[3:0], nyb_l[3:0]};
                 p_new[P_C] = nyb_h[4];
             end
             else begin
-                {carry, result} = {1'b0, operand1} + operand2 + p_old[P_C];
                 p_new[P_C] = carry;
                 p_new[P_V] = operand1[7] == operand2[7] &&
                              operand1[7] != result[7];
@@ -192,7 +197,6 @@ module cpu6502(
 
             {borrow, result} = {1'b0, operand1} - operand2 - !p_old[P_C];
 
-            p_new[P_C] = !borrow;
             p_new[P_V] = operand1[7] != operand2[7] &&
                          operand1[7] != result[7];
             p_new[P_N] = result[7];
@@ -204,15 +208,21 @@ module cpu6502(
                 reg [4:0] nyb_h;
 
                 nyb_l = {1'b0, operand1[3:0]} - operand2[3:0] - !p_old[P_C];
-                if (nyb_l[4])
-                    nyb_l = nyb_l - 5'd6;
+                if (nyb_l >= 5'h16)
+                    nyb_l = nyb_l - 5'h06;
+                else if (nyb_l[4])
+                    nyb_l = nyb_l + 5'h0a;
                 nyb_h = {1'b0, operand1[7:4]} - operand2[7:4] - nyb_l[4];
-                if (nyb_h[4])
-                    nyb_h = nyb_h - 5'd6;
+                if (nyb_h >= 5'h16)
+                    nyb_h = nyb_h - 5'h06;
+                else if (nyb_h[4])
+                    nyb_h = nyb_h + 5'h0a;
 
                 result = {nyb_h[3:0], nyb_l[3:0]};
-                p_new[P_C] = ~nyb_h[4];
+                p_new[P_C] = !nyb_h[4];
             end
+            else
+                p_new[P_C] = !borrow;
 
             func_sbc = {p_new, result};
         end
@@ -232,31 +242,31 @@ module cpu6502(
             p_new = p_old;
 
             case (op)
-                3'b000: begin	// ORA
+                3'b000: begin   // ORA
                     result = operand1 | operand2;
                     p_new = func_nzflags(p_old, result);
                 end
-                3'b001: begin	// AND
+                3'b001: begin   // AND
                     result = operand1 & operand2;
                     p_new = func_nzflags(p_old, result);
                 end
-                3'b010: begin	// EOR
+                3'b010: begin   // EOR
                     result = operand1 ^ operand2;
                     p_new = func_nzflags(p_old, result);
                 end
-                3'b011:		// ADC
+                3'b011:         // ADC
                     {p_new, result} = func_adc(p_old, operand1, operand2);
-                3'b100:		// STA
+                3'b100:         // STA
                     result = operand1;
-                3'b101: begin	// LDA
+                3'b101: begin   // LDA
                     result = operand2;
                     p_new = func_nzflags(p_old, result);
                 end
-                3'b110: begin	// CMP
+                3'b110: begin   // CMP
                     result = operand1;
                     p_new = func_compare(p_old, operand1, operand2);
                 end
-                3'b111:		// SBC
+                3'b111:         // SBC
                     {p_new, result} = func_sbc(p_old, operand1, operand2);
             endcase
 
@@ -277,41 +287,41 @@ module cpu6502(
     localparam [5:0]
         CPU_SM_RESET =          0,
         CPU_SM_VECTOR1 =        1,
-        CPU_SM_FETCH =		2,
+        CPU_SM_FETCH =          2,
         CPU_SM_DECODE =         3,
         CPU_SM_BRANCH =         4,
-        CPU_SM_BRANCH2 =	5,
-        CPU_SM_FETCH_OPAH =	6,
-        CPU_SM_FETCH_INDL =	7,
-        CPU_SM_FETCH_INDLX =	8,
-        CPU_SM_FETCH_INDH =	9,
-        CPU_SM_FETCH_FIXH =	10,
-        CPU_SM_FETCH_ZPX =	11,
-        CPU_SM_DELAY =		12,
-        CPU_SM_FETCH_OP =	13,
-        CPU_SM_STORE =		14,
-        CPU_SM_RMW =		15,
+        CPU_SM_BRANCH2 =        5,
+        CPU_SM_FETCH_OPAH =     6,
+        CPU_SM_FETCH_INDL =     7,
+        CPU_SM_FETCH_INDLX =    8,
+        CPU_SM_FETCH_INDH =     9,
+        CPU_SM_FETCH_FIXH =     10,
+        CPU_SM_FETCH_ZPX =      11,
+        CPU_SM_DELAY =          12,
+        CPU_SM_FETCH_OP =       13,
+        CPU_SM_STORE =          14,
+        CPU_SM_RMW =            15,
         CPU_SM_INTR1 =          20,
         CPU_SM_INTR2 =          21,
         CPU_SM_INTR3 =          22,
         CPU_SM_INTR4 =          23,
-        CPU_SM_INTR5 =		24,
-        CPU_SM_INTR6 =		25,
-        CPU_SM_JMP =		26,
-        CPU_SM_JSR1 =		27,
-        CPU_SM_JSR2 =		28,
-        CPU_SM_JSR3 =		29,
-        CPU_SM_JMPI1 =		32,
-        CPU_SM_JMPI2 =		33,
-        CPU_SM_JMPI3 =		34,
-        CPU_SM_RTSI1 =		35,
-        CPU_SM_RTI2 =		36,
-        CPU_SM_RTSI3 =		37,
-        CPU_SM_RTSI4 =		38,
-        CPU_SM_RTS5 =		39,
-        CPU_SM_PUSH =		40,
-        CPU_SM_PULL1 =		41,
-        CPU_SM_PULL2 =		42;
+        CPU_SM_INTR5 =          24,
+        CPU_SM_INTR6 =          25,
+        CPU_SM_JMP =            26,
+        CPU_SM_JSR1 =           27,
+        CPU_SM_JSR2 =           28,
+        CPU_SM_JSR3 =           29,
+        CPU_SM_JMPI1 =          32,
+        CPU_SM_JMPI2 =          33,
+        CPU_SM_JMPI3 =          34,
+        CPU_SM_RTSI1 =          35,
+        CPU_SM_RTI2 =           36,
+        CPU_SM_RTSI3 =          37,
+        CPU_SM_RTSI4 =          38,
+        CPU_SM_RTS5 =           39,
+        CPU_SM_PUSH =           40,
+        CPU_SM_PULL1 =          41,
+        CPU_SM_PULL2 =          42;
 
     // combinatorial outputs of always @(*) block below.
     reg [5:0]      cpu_sm_nxt;
@@ -344,7 +354,7 @@ module cpu6502(
             y <=            y_nxt;
 
             instr <=        instr_nxt;
-            operand <=	    operand_nxt;
+            operand <=      operand_nxt;
             opaddr_l <=     opaddr_l_nxt;
             opaddr_h <=     opaddr_h_nxt;
         end
@@ -360,7 +370,7 @@ module cpu6502(
         x_nxt =         x;
         y_nxt =         y;
         instr_nxt =     instr;
-        operand_nxt =	operand;
+        operand_nxt =   operand;
         opaddr_l_nxt =  opaddr_l;
         opaddr_h_nxt =  opaddr_h;
 
@@ -392,10 +402,10 @@ module cpu6502(
             // Fetch instruction
             CPU_SM_FETCH: begin
                 instr_nxt = DI;
-                if (do_nmi || (!irq_r && !p[P_I]))	// IRQ, NMI?
+                SYNC = 1;
+                if (do_nmi || (!irq_r && !p[P_I]))      // IRQ, NMI?
                     cpu_sm_nxt = CPU_SM_INTR1;
                 else begin
-                    SYNC = 1;
                     pc_nxt = pc_inc;
                     cpu_sm_nxt = CPU_SM_DECODE;
                 end
@@ -413,7 +423,7 @@ module cpu6502(
                 cpu_sm_nxt = CPU_SM_FETCH;
 
                 casez (instr)
-                    8'b???1_0000: begin:br	// Branches
+                    8'b???1_0000: begin:br      // Branches
                         reg do_branch;
 
                         pc_nxt = pc_inc;
@@ -434,24 +444,24 @@ module cpu6502(
                             cpu_sm_nxt = CPU_SM_FETCH;
                     end
 
-                    8'b???0_1001: begin	// Group 1 immediate
+                    8'b???0_1001: begin // Group 1 immediate
                         pc_nxt = pc_inc;
                         {p_nxt, acc_nxt} = func_alu1(p, acc, DI, instr[7:5]);
                         cpu_sm_nxt = CPU_SM_FETCH;
                     end
 
-                    8'b????_??01: begin	// Group 1 other than imm
+                    8'b????_??01: begin // Group 1 other than imm
                         pc_nxt = pc_inc;
                         case (instr[4:2])
-                            3'b000, 3'b100:	// INDIRECT
+                            3'b000, 3'b100:     // INDIRECT
                                 cpu_sm_nxt = CPU_SM_FETCH_INDL;
-                            3'b001:		// ZP
+                            3'b001:             // ZP
                                 if (instr[7:5] == 3'b100)
                                     // STA ZP
                                     cpu_sm_nxt = CPU_SM_STORE;
                                 else
                                     cpu_sm_nxt = CPU_SM_FETCH_OP;
-                            3'b101:		// ZP,X
+                            3'b101:             // ZP,X
                                 cpu_sm_nxt = CPU_SM_FETCH_ZPX;
                             3'b011, 3'b110, 3'b111:
                                 // ABS ABS,Y ABS,X
@@ -461,14 +471,14 @@ module cpu6502(
                         endcase
                     end
 
-                    8'b1010_0010: begin	// LDX imm (group 2 oddball)
+                    8'b1010_0010: begin // LDX imm (group 2 oddball)
                         pc_nxt = pc_inc;
                         x_nxt = DI;
                         p_nxt = func_nzflags(p, x_nxt);
                         cpu_sm_nxt = CPU_SM_FETCH;
                     end
 
-                    8'b0??0_1010: begin	// Acc shift instrs, Group 2
+                    8'b0??0_1010: begin // Acc shift instrs, Group 2
                         case (instr[6:5])
                             2'b00: // ASL A
                                 {p_nxt[P_C], acc_nxt} = {acc, 1'b0};
@@ -482,7 +492,7 @@ module cpu6502(
                         p_nxt = func_nzflags(p_nxt, acc_nxt);
                     end
 
-                    8'b1000_1010: begin	// TXA
+                    8'b1000_1010: begin // TXA
                         acc_nxt = x;
                         p_nxt = func_nzflags(p, acc_nxt);
                     end
@@ -490,17 +500,17 @@ module cpu6502(
                     8'b1001_1010:       // TXS
                         sp_nxt = x;
 
-                    8'b1010_1010: begin	// TAX
+                    8'b1010_1010: begin // TAX
                         x_nxt = acc;
                         p_nxt = func_nzflags(p, x_nxt);
                     end
 
-                    8'b1011_1010: begin	// TSX
+                    8'b1011_1010: begin // TSX
                         x_nxt = sp;
                         p_nxt = func_nzflags(p, x_nxt);
                     end
 
-                    8'b1100_1010: begin	// DEX
+                    8'b1100_1010: begin // DEX
                         x_nxt = x - 1;
                         p_nxt = func_nzflags(p, x_nxt);
                     end
@@ -508,10 +518,10 @@ module cpu6502(
                     8'b1110_1010:       // NOP
                         ;
 
-                    8'b????_??10: begin	// All other group 2
+                    8'b????_??10: begin // All other group 2
                         pc_nxt = pc_inc;
                         case (instr[4:2])
-                            3'b001:	// ZP
+                            3'b001:     // ZP
                                 if (instr[7:5] == 3'b100 /* STX */)
                                     cpu_sm_nxt = CPU_SM_STORE;
                                 else
@@ -533,17 +543,17 @@ module cpu6502(
                         endcase
                     end
 
-                    8'b0000_0000: begin	// BRK
+                    8'b0000_0000: begin // BRK
                         pc_nxt = pc_inc;
                         cpu_sm_nxt = CPU_SM_INTR2;
                     end
 
-                    8'b1001_1000: begin	// TYA
+                    8'b1001_1000: begin // TYA
                         acc_nxt = y;
                         p_nxt = func_nzflags(p, acc_nxt);
                     end
 
-                    8'b???1_1000: begin	// Set or reset flags.
+                    8'b???1_1000: begin // Set or reset flags.
                         case (instr[7:6])
                             2'b00:
                                 p_nxt[P_C] = instr[5];
@@ -556,74 +566,74 @@ module cpu6502(
                         endcase
                     end
 
-                    8'b1000_1000: begin	// DEY
+                    8'b1000_1000: begin // DEY
                         y_nxt = y - 1;
                         p_nxt = func_nzflags(p, y_nxt);
                     end
 
-                    8'b1010_1000: begin	// TAY
+                    8'b1010_1000: begin // TAY
                         y_nxt = acc;
                         p_nxt = func_nzflags(p, y_nxt);
                     end
 
-                    8'b1100_1000: begin	// INY
+                    8'b1100_1000: begin // INY
                         y_nxt = y + 1;
                         p_nxt = func_nzflags(p, y_nxt);
                     end
 
-                    8'b1110_1000: begin	// INX
+                    8'b1110_1000: begin // INX
                         x_nxt = x + 1;
                         p_nxt = func_nzflags(p, x_nxt);
                     end
 
-                    8'b0100_1100: begin	// JMP
+                    8'b0100_1100: begin // JMP
                         pc_nxt = pc_inc;
                         cpu_sm_nxt = CPU_SM_JMP;
                     end
 
-                    8'b0010_0000: begin	// JSR
+                    8'b0010_0000: begin // JSR
                         pc_nxt = pc_inc;
                         cpu_sm_nxt = CPU_SM_JSR1;
                     end
 
-                    8'b0110_1100: begin	// JMP (ind)
+                    8'b0110_1100: begin // JMP (ind)
                         cpu_sm_nxt = CPU_SM_JMPI1;
                         pc_nxt = pc_inc;
                     end
 
-                    8'b01?0_0000:		// RTS / RTI
+                    8'b01?0_0000:               // RTS / RTI
                         cpu_sm_nxt = CPU_SM_RTSI1;
 
-                    8'b0?00_1000:		// PHP / PHA
+                    8'b0?00_1000:               // PHP / PHA
                         cpu_sm_nxt = CPU_SM_PUSH;
 
-                    8'b0?10_1000:		// PLP / PLA
+                    8'b0?10_1000:               // PLP / PLA
                         cpu_sm_nxt = CPU_SM_PULL1;
 
-                    8'b1010_0000: begin	// LDY # (group 3 imm)
+                    8'b1010_0000: begin // LDY # (group 3 imm)
                         pc_nxt = pc_inc;
                         y_nxt = DI;
                         p_nxt = func_nzflags(p, y_nxt);
                         cpu_sm_nxt = CPU_SM_FETCH;
                     end
 
-                    8'b1100_0000: begin	// CPY # (group 3 imm)
+                    8'b1100_0000: begin // CPY # (group 3 imm)
                         pc_nxt = pc_inc;
                         p_nxt = func_compare(p, y, DI);
                         cpu_sm_nxt = CPU_SM_FETCH;
 
                     end
 
-                    8'b1110_0000: begin	// CPX # (group 3 imm)
+                    8'b1110_0000: begin // CPX # (group 3 imm)
                         pc_nxt = pc_inc;
                         p_nxt = func_compare(p, x, DI);
                         cpu_sm_nxt = CPU_SM_FETCH;
                     end
 
-                    8'b????_??00: begin	// All other group 3
+                    8'b????_??00: begin // All other group 3
                         pc_nxt = pc_inc;
                         case (instr[4:2])
-                            3'b001:	// ZP
+                            3'b001:     // ZP
                                 if (instr[7:5] == 3'b100 /* STY */)
                                     cpu_sm_nxt = CPU_SM_STORE;
                                 else
@@ -803,32 +813,32 @@ module cpu6502(
                 cpu_sm_nxt = CPU_SM_FETCH;
 
                 casez (instr)
-                    8'b????_??01:	// Group 1 instructions
+                    8'b????_??01:       // Group 1 instructions
                         {p_nxt, acc_nxt} = func_alu1(p, acc, DI, instr[7:5]);
 
-                    8'b101?_??10: begin	// LDX (group 2)
+                    8'b101?_??10: begin // LDX (group 2)
                         x_nxt = DI;
                         p_nxt = func_nzflags(p, x_nxt);
                     end
 
-                    8'b101?_??00: begin	// LDY (group 3)
+                    8'b101?_??00: begin // LDY (group 3)
                         y_nxt = DI;
                         p_nxt = func_nzflags(p, y_nxt);
                     end
 
-                    8'b110?_??00:	// CPY (group 3)
+                    8'b110?_??00:       // CPY (group 3)
                         p_nxt = func_compare(p, y, DI);
 
-                    8'b111?_??00:	// CPX (group 3)
+                    8'b111?_??00:       // CPX (group 3)
                         p_nxt = func_compare(p, x, DI);
 
-                    8'b001?_??00: begin	// BIT (group 3)
+                    8'b001?_??00: begin // BIT (group 3)
                         p_nxt[P_N] = DI[7];
                         p_nxt[P_V] = DI[6];
                         p_nxt[P_Z] = (DI & acc) == 8'h00;
                     end
 
-                    8'b????_??10:	// group 2 RMW instructions
+                    8'b????_??10:       // group 2 RMW instructions
                         cpu_sm_nxt = CPU_SM_RMW;
 
                     default:
