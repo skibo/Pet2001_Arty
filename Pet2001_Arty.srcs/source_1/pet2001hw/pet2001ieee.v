@@ -27,6 +27,7 @@
 // Keep in mind the ieee signals are all active low and _o signals are coming
 // from PET hardware and so are inputs.
 
+(* keep_hiearchy = "YES" *)
 module pet2001ieee
     (
                  input [7:0]      ieee_do, // IEEE interface
@@ -52,7 +53,7 @@ module pet2001ieee
 
     parameter
         PRGMFILE = "program.mem",
-        PRGMLEN = 32766;
+        PRGMLEN = 22098;
 
     // Implement a block RAM for program data.
     (* ram_style = "block" *)
@@ -60,7 +61,7 @@ module pet2001ieee
     reg [7:0]   prgmdata;
     reg [14:0]  prgmaddr;
 
-    initial $readmemh(PRGMLEN, prgm);
+    initial $readmemh(PRGMFILE, prgm);
 
     always @(posedge clk)
         prgmdata <= prgm[prgmaddr];
@@ -99,7 +100,7 @@ module pet2001ieee
 
     // Main state machine
     parameter [1:0]
-        IEEE_STATE_IDLE = 9,
+        IEEE_STATE_IDLE = 0,
         IEEE_STATE_LISTEN = 1,
         IEEE_STATE_FNAME = 2,
         IEEE_STATE_TALK = 3;
@@ -246,9 +247,11 @@ module pet2001ieee
                         ieee_sm_nxt = IEEE_STATE_IDLE;
                 end
                 if (ieee_ndac_o && !ieee_ndac_o_1) begin
-                    // Positive transition of NDAC
+                    // Positive transition of NDAC.  Data acknowledged.
                     ieee_dav_i_nxt = 1;
                     ieee_eoi_i_nxt = 1;
+                    if (ieee_atn_o)
+                        prgmaddr_inc = 1;
                 end
                 if (ieee_nrfd_o && !ieee_nrfd_o_1) begin
                     // Positive transition of NRFD
