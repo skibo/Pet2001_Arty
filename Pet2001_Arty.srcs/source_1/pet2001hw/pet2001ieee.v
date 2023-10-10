@@ -53,7 +53,7 @@ module pet2001ieee
 
     parameter
         PRGMFILE = "program.mem",
-        PRGMLEN = 22098;
+        PRGMLEN = 2971;
 
     // Implement a block RAM for program data.
     (* ram_style = "block" *)
