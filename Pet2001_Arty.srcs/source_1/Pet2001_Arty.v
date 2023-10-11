@@ -144,6 +144,19 @@ module Pet2001_Arty(
     wire clk_stop = sw0_2;
     wire [3:0] keyrow;
     wire [7:0] keyin;
+    wire [7:0] ieee_do;
+    wire [7:0] ieee_di;
+    wire       ieee_atn_o;
+    wire       ieee_atn_i;
+    wire       ieee_ndac_o;
+    wire       ieee_ndac_i;
+    wire       ieee_nrfd_o;
+    wire       ieee_nrfd_i;
+    wire       ieee_dav_o;
+    wire       ieee_dav_i;
+    wire       ieee_srq_i;
+    wire       ieee_eoi_o;
+    wire       ieee_eoi_i;
 
     pet2001_top
         pet_top(
@@ -160,6 +173,20 @@ module Pet2001_Arty(
                 .cass_write(CASS_WR),
                 .cass_sense_n(1'b0),
                 .cass_read(cass_rd_2),
+
+                .ieee_do(ieee_do),
+                .ieee_di(ieee_di),
+                .ieee_atn_o(ieee_atn_o),
+                .ieee_atn_i(ieee_atn_i),
+                .ieee_ndac_o(ieee_ndac_o),
+                .ieee_ndac_i(ieee_ndac_i),
+                .ieee_nrfd_o(ieee_nrfd_o),
+                .ieee_nrfd_i(ieee_nrfd_i),
+                .ieee_dav_o(ieee_dav_o),
+                .ieee_dav_i(ieee_dav_i),
+                .ieee_srq_i(ieee_srq_i),
+                .ieee_eoi_o(ieee_eoi_o),
+                .ieee_eoi_i(ieee_eoi_i),
 
                 .audio(AUDIO),
 
@@ -182,6 +209,26 @@ module Pet2001_Arty(
                 .clk(clk),
                 .reset(reset)
          );
+
+    pet2001ieee
+        ieee(
+             .ieee_do(ieee_do),
+             .ieee_di(ieee_di),
+             .ieee_atn_o(ieee_atn_o),
+             .ieee_atn_i(ieee_atn_i),
+             .ieee_ndac_o(ieee_ndac_o),
+             .ieee_ndac_i(ieee_ndac_i),
+             .ieee_nrfd_o(ieee_nrfd_o),
+             .ieee_nrfd_i(ieee_nrfd_i),
+             .ieee_dav_o(ieee_dav_o),
+             .ieee_dav_i(ieee_dav_i),
+             .ieee_srq_i(ieee_srq_i),
+             .ieee_eoi_o(ieee_eoi_o),
+             .ieee_eoi_i(ieee_eoi_i),
+
+             .clk(clk),
+             .reset(reset)
+        );
 
     always @(posedge clk)
         LED <= (keyrow == 4'd11); // diag LED

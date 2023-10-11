@@ -62,11 +62,25 @@ module pet2001hw #(parameter CLKDIV = 50)
      input            cass_sense_n,
      input            cass_read,
 
+     output [7:0]     ieee_do,          // IEEE interface
+     input [7:0]      ieee_di,
+     output           ieee_atn_o,
+     input            ieee_atn_i,
+     output           ieee_ndac_o,
+     input            ieee_ndac_i,
+     output           ieee_nrfd_o,
+     input            ieee_nrfd_i,
+     output           ieee_dav_o,
+     input            ieee_dav_i,
+     input            ieee_srq_i,
+     output           ieee_eoi_o,
+     input            ieee_eoi_i,
+
      output           audio,            // CB2 audio
 
+     input            diag_l,
      input            clk_speed,
      input            clk_stop,
-     input            diag_l,
 
      input            clk,
      input            reset
@@ -186,41 +200,6 @@ module pet2001hw #(parameter CLKDIV = 50)
                     .clk(clk),
                     .reset(reset)
             );
-
-    ////////////////////////////////////////////////////////
-    // IEEE hardware
-    ////////////////////////////////////////////////////////
-    wire [7:0]  ieee_do;
-    wire [7:0]  ieee_di;
-    wire        ieee_atn_o;
-    wire        ieee_atn_i;
-    wire        ieee_ndac_o;
-    wire        ieee_ndac_i;
-    wire        ieee_nrfd_o;
-    wire        ieee_nrfd_i;
-    wire        ieee_dav_o;
-    wire        ieee_dav_i;
-    wire        ieee_srq_i;
-    wire        ieee_eoi_o;
-    wire        ieee_eoi_i;
-
-    pet2001ieee ieee(.ieee_do(ieee_do),
-                     .ieee_di(ieee_di),
-                     .ieee_atn_o(ieee_atn_o),
-                     .ieee_atn_i(ieee_atn_i),
-                     .ieee_ndac_o(ieee_ndac_o),
-                     .ieee_ndac_i(ieee_ndac_i),
-                     .ieee_nrfd_o(ieee_nrfd_o),
-                     .ieee_nrfd_i(ieee_nrfd_i),
-                     .ieee_dav_o(ieee_dav_o),
-                     .ieee_dav_i(ieee_dav_i),
-                     .ieee_srq_i(ieee_srq_i),
-                     .ieee_eoi_o(ieee_eoi_o),
-                     .ieee_eoi_i(ieee_eoi_i),
-
-                     .clk(clk),
-                     .reset(reset)
-             );
 
     ////////////////////////////////////////////////////////
     // I/O hardware

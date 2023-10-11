@@ -41,20 +41,36 @@
 //////////////////////////////////////////////////////////////////////////////
 
 module pet2001_top(
-                   output [3:0] vga_r,
+                   output [3:0] vga_r,          // Video
                    output [3:0] vga_g,
                    output [3:0] vga_b,
                    output       vga_hsync,
                    output       vga_vsync,
 
-                   output [3:0] keyrow,
+                   output [3:0] keyrow,         // Keyboard
                    input [7:0]  keyin,
 
-                   output       cass_motor_n,
+                   output       cass_motor_n,   // Cassette
                    output       cass_write,
-                   output       audio,
                    input        cass_sense_n,
                    input        cass_read,
+
+
+                   output [7:0] ieee_do,        // IEEE interface
+                   input [7:0]  ieee_di,
+                   output       ieee_atn_o,
+                   input        ieee_atn_i,
+                   output       ieee_ndac_o,
+                   input        ieee_ndac_i,
+                   output       ieee_nrfd_o,
+                   input        ieee_nrfd_i,
+                   output       ieee_dav_o,
+                   input        ieee_dav_i,
+                   input        ieee_srq_i,
+                   output       ieee_eoi_o,
+                   input        ieee_eoi_i,
+
+                   output       audio,          // CB2 audio
 
                    input        diag_l,
                    input        clk_speed,
@@ -115,10 +131,24 @@ module pet2001_top(
 
                  .cass_motor_n(cass_motor_n),
                  .cass_write(cass_write),
-                 .audio(audio),
                  .cass_sense_n(cass_sense_n),
                  .cass_read(cass_read),
 
+                 .ieee_do(ieee_do),
+                 .ieee_di(ieee_di),
+                 .ieee_atn_o(ieee_atn_o),
+                 .ieee_atn_i(ieee_atn_i),
+                 .ieee_ndac_o(ieee_ndac_o),
+                 .ieee_ndac_i(ieee_ndac_i),
+                 .ieee_nrfd_o(ieee_nrfd_o),
+                 .ieee_nrfd_i(ieee_nrfd_i),
+                 .ieee_dav_o(ieee_dav_o),
+                 .ieee_dav_i(ieee_dav_i),
+                 .ieee_srq_i(ieee_srq_i),
+                 .ieee_eoi_o(ieee_eoi_o),
+                 .ieee_eoi_i(ieee_eoi_i),
+
+                 .audio(audio),
                  .diag_l(diag_l),
 
                  .clk_speed(clk_speed),

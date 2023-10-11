@@ -40,6 +40,8 @@
 #    "Pet2001_Arty.srcs/source_1/misc/ps2_intf.v"
 #    "Pet2001_Arty.srcs/source_1/pet2001hw/via6522.v"
 #    "Pet2001_Arty.srcs/source_1/Pet2001_Arty.v"
+#    "Pet2001_Arty.srcs/source_1/ieee/pet2001ieee.v
+#    "Pet2001_Arty.srcs/source_1/ieee/program.mem
 #    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"
 #    "Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"
 #    "Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc"
@@ -161,6 +163,8 @@ set files [list \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/misc/ps2_intf.v"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/pet2001hw/via6522.v"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/ieee/pet2001ieee.v"] \
+ [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/ieee/program.mem"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/roms/pet2001_rom1.mem"] \
  [file normalize "${origin_dir}/Pet2001_Arty.srcs/source_1/roms/pet2001_rom2.mem"] \
 ]
