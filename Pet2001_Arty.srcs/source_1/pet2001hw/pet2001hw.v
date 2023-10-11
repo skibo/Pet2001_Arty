@@ -231,7 +231,7 @@ module pet2001hw #(parameter CLKDIV = 50)
 
     pet2001io io(.data_out(io_read_data),
                  .data_in(data_in),
-                 .addr(addr[10:0]),
+                 .addr(addr[6:0]),
                  .rdy(io_rdy),
                  .we(io_we),
 
