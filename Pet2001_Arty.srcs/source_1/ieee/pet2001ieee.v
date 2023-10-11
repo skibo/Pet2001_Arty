@@ -27,7 +27,6 @@
 // Keep in mind the ieee signals are all active low and _o signals are coming
 // from PET hardware and so are inputs.
 
-(* keep_hiearchy = "YES" *)
 module pet2001ieee
     (
                  input [7:0]      ieee_do, // IEEE interface
