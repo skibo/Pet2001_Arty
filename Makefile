@@ -7,6 +7,7 @@ SOURCES= \
 	$(SRCDIR)/source_1/pet2001_top.v			\
 	$(SRCDIR)/source_1/cpu6502/cpu6502.v			\
 	$(SRCDIR)/source_1/misc/ps2_intf.v			\
+	$(SRCDIR)/source_1/ieee/pet2001ieee.v			\
 	$(SRCDIR)/source_1/pet2001hw/pet2001ps2_key.v		\
 	$(SRCDIR)/source_1/pet2001hw/pia6520.v			\
 	$(SRCDIR)/source_1/pet2001hw/pet2001ram.v		\
@@ -19,6 +20,8 @@ SOURCES= \
 
 ROMS=	$(SRCDIR)/source_1/roms/pet2001_rom2.mem		\
 	$(SRCDIR)/source_1/roms/pet2001_rom1.mem
+
+MEMFILES= $(SRCDIR)/source_1/ieee/program.mem
 
 ifndef XILINX_VIVADO
 $(error XILINX_VIVADO must be set to point to Xilinx tools)
@@ -35,8 +38,11 @@ PROJECT_FILE=$(PROJNM)/$(PROJNM).xpr
 
 project: $(PROJECT_FILE)
 
-$(PROJECT_FILE): $(ROMS)
+$(PROJECT_FILE): $(ROMS) $(MEMFILES)
 	$(VIVADO) -mode batch -source project.tcl
+
+$(MEMFILES): $(SRCDIR)/source_1/ieee/program.prg
+	(cd $(SRCDIR)/source_1/ieee ; make)
 
 BITSTREAM=$(PROJNM)/$(PROJNM).runs/impl_1/$(PROJNM).bit
 
