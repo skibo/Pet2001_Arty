@@ -116,11 +116,11 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
 
                  .ca1_in(pia1_ca1_in),
                  .ca2_out(pia1_ca2_out),
-                 .ca2_in(1'b0),
+                 .ca2_in(pia1_ca2_out0),
 
                  .cb1_in(video_sync),
                  .cb2_out(cass_motor_n),
-                 .cb2_in(1'b0),
+                 .cb2_in(cass_motor_n),
 
                  .clk(clk),
                  .reset(reset)
@@ -177,18 +177,18 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
 
                 .irq(via_irq),
                 .porta_out(),
-                .porta_in(8'h00),
+                .porta_in(8'hff),
                 .portb_out(via_portb_out),
                 .portb_in(via_portb_in),
 
-                .ca1_in(1'b0),
+                .ca1_in(1'b1),
                 .ca2_out(video_gfx),
-                .ca2_in(1'b0),
+                .ca2_in(video_gfx),
 
                 .cb1_out(),
-                .cb1_in(1'b0),
+                .cb1_in(1'b1),
                 .cb2_out(audio),
-                .cb2_in(1'b0),
+                .cb2_in(audio),
 
                 .slow_clock(slow_clock),
 

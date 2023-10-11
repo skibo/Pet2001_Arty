@@ -205,8 +205,8 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
         case (cra[5:3])
             3'b100:     ca2_out <= irqa1;
             3'b101:     ca2_out <= !ca1_act_trans;
-            3'b111:     ca2_out <= 1'b1;
-            default:    ca2_out <= 1'b0;
+            3'b110:	ca2_out <= 1'b0;
+            default:    ca2_out <= 1'b1;
         endcase
 
     reg cb2_out_r;
@@ -220,8 +220,8 @@ module pia6520(output reg [7:0] data_out,       // cpu interface
         case (crb[5:3])
             3'b100:     cb2_out <= cb2_out_r;
             3'b101:     cb2_out <= !portb_wr_strobe;
-            3'b111:     cb2_out <= 1'b1;
-            default:    cb2_out <= 1'b0;
+            3'b110:	cb2_out <= 1'b0;
+            default:    cb2_out <= 1'b1;
         endcase
 
     ///////////////////////////////////////////////////
