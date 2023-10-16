@@ -116,7 +116,7 @@ module pet2001io(output reg [7:0] data_out,     // CPU interface
 
                  .ca1_in(pia1_ca1_in),
                  .ca2_out(pia1_ca2_out),
-                 .ca2_in(pia1_ca2_out0),
+                 .ca2_in(pia1_ca2_out),
 
                  .cb1_in(video_sync),
                  .cb2_out(cass_motor_n),
