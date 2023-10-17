@@ -98,13 +98,13 @@ module pet2001vid(output reg        vid_n,      // Pet video interface
     always @(posedge clk)
         if (reset || next_line)
             horz_n <= 1'b0;
-        else if (clk_div && h_counter == 9'd190)
+        else if (clk_div && h_counter == 9'd191)
             horz_n <= 1'b1;
 
     always @(posedge clk)
         if (reset || next_screen)
             vert_n <= 1'b1;
-        else if (clk_div && v_counter == 9'd20)
+        else if (next_line && v_counter == 9'd19)
             vert_n <= 1'b0;
 
     ////////// Pet 320x200 display
@@ -122,9 +122,9 @@ module pet2001vid(output reg        vid_n,      // Pet video interface
         PET_WINDOW_RIGHT =  PET_WINDOW_LEFT + 9'd320;
 
     always @(posedge clk)
-        if (reset || (clk_div && v_counter == PET_WINDOW_BOTTOM))
+        if (reset || (next_line && v_counter == PET_WINDOW_BOTTOM - 1))
             is_pet_row <= 1'b0;
-        else if (clk_div && v_counter == PET_WINDOW_TOP)
+        else if (next_line && v_counter == PET_WINDOW_TOP - 1)
             is_pet_row <= 1'b1;
 
     always @(posedge clk)
