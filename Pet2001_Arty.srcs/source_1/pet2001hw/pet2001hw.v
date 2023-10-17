@@ -44,7 +44,7 @@ module pet2001hw #(parameter CLKDIV = 50)
      input [7:0]      data_in,
      output reg [7:0] data_out,
      input            we,
-     output           rdy,
+     output reg       rdy,
      output           nmi,
      output           irq,
 
@@ -110,19 +110,15 @@ module pet2001hw #(parameter CLKDIV = 50)
             slow_clock <= (clk_speed || clkdiv == 7'd1) && !clk_stop;
 
     ///////////////////////////////////////////////////////////////
-    // rdy logic: A wait state is needed for video RAM and I/O.  rdy is also
-    // held back until slow_clock pulse if clk_speed isn't asserted.
+    // rdy logic: A wait state is needed for all memory and I/O.
+    // But, we're running much faster than 1Mhz so it has no effect
+    // on how fast the PET runs.
     ///////////////////////////////////////////////////////////////
-    reg         rdy_r;
-    wire        needs_cycle = (addr[15:11] == 5'b1110_1);
-
-    assign rdy = rdy_r || (clk_speed && !needs_cycle);
-
     always @(posedge clk)
         if (reset)
-            rdy_r <= 0;
+            rdy <= 0;
         else
-            rdy_r <= slow_clock && ! rdy;
+            rdy <= !rdy && slow_clock;
 
     /////////////////////////////////////////////////////////////
     // Pet ROMS incuding character ROM.  Character data is read

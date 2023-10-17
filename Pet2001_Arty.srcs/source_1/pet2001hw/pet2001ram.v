@@ -11,14 +11,10 @@
 //
 //      32K RAM for PET.
 //
-//      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
-//      should not generate an inverter on the clock line here but instead
-//      change an attribute in the BRAM which controls which edge triggers it.
-//
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2011, 2013, 2017 Thomas Skibo.  All rights reserved.
+// Copyright (C) 2011-2023 Thomas Skibo.  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -56,11 +52,11 @@ module pet2001ram(
     (* ram_style = "block" *)
     reg [7 : 0] ram[32767 : 0];
 
-    always @(negedge clk)
+    always @(posedge clk)
         if (we)
             ram[addr] <= data_in;
 
-    always @(negedge clk)
+    always @(posedge clk)
         data_out <= ram[addr];
 
 endmodule // pet2001ram

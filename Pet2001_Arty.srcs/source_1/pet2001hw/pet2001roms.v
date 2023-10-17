@@ -16,14 +16,10 @@
 //      through the second RAM ports.  This lets us combine all 16K into one
 //      set of RAMs which is easy to arrange.
 //
-//      These RAMs are clocked by the negative edge of clk.  The Xilinx tools
-//      should not generate an inverter on the clock line here but instead
-//      change an attribute in the BRAM which controls which edge triggers it.
-//
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2011, 2013, 2017 Thomas Skibo.  All rights reserved.
+// Copyright (C) 2011-2023 Thomas Skibo.  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -50,7 +46,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 module pet2001roms(
-                   output reg [7 : 0] data, // cpu interface
+                   output reg [7 : 0] data,     // cpu interface
                    input [13 : 0]     addr,
 
                    output reg [7 : 0] chardata, // video interface
@@ -64,10 +60,10 @@ module pet2001roms(
 
     initial $readmemh("pet2001_rom2.mem", rom);
 
-    always @(negedge clk)
+    always @(posedge clk)
         chardata <= rom[{3'b101, charaddr}];
 
-    always @(negedge clk)
+    always @(posedge clk)
         data <= rom[addr];
 
 endmodule // pet2001roms
