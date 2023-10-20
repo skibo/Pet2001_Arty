@@ -112,6 +112,10 @@ module Pet2001_Arty(
     BUFG clkfb_buf (.I(clkfbout), .O(clkfbin));
 
     // Create a synchronized reset.
+    initial begin
+        reset_p1 = 1;
+        reset = 1;
+    end
     always @(posedge clk) begin
         reset_p1 <= (BTN || ~mmcm_locked);
         reset <= reset_p1;
