@@ -38,7 +38,8 @@ PROJECT_FILE=$(PROJNM)/$(PROJNM).xpr
 
 project: $(PROJECT_FILE)
 
-$(PROJECT_FILE): $(ROMS) $(MEMFILES)
+$(PROJECT_FILE):
+	(cd $(SRCDIR)/source_1/ieee ; make)
 	$(VIVADO) -mode batch -source project.tcl
 
 $(MEMFILES): $(SRCDIR)/source_1/ieee/program.prg
