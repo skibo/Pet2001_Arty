@@ -1,4 +1,3 @@
-
 PROJNM=Pet2001_Arty
 SRCDIR=Pet2001_Arty.srcs
 SOURCES= \
@@ -40,14 +39,18 @@ project: $(PROJECT_FILE)
 
 $(PROJECT_FILE):
 	(cd $(SRCDIR)/source_1/ieee ; make)
+ifeq ("","$(wildcard $(PROJFILE))")
 	$(VIVADO) -mode batch -source project.tcl
+else
+	@echo Project already exists.
+endif
 
 $(MEMFILES): $(SRCDIR)/source_1/ieee/program.prg
 	(cd $(SRCDIR)/source_1/ieee ; make)
 
 BITSTREAM=$(PROJNM)/$(PROJNM).runs/impl_1/$(PROJNM).bit
 
-bitstream: $(BITSTREAM) 
+bitstream: $(BITSTREAM)
 
 $(BITSTREAM): $(SOURCES) $(ROMS) $(PROJECT_FILE)
 	@echo Building $(BITSTREAM) from sources
@@ -57,4 +60,3 @@ $(BITSTREAM): $(SOURCES) $(ROMS) $(PROJECT_FILE)
 program: $(BITSTREAM)
 	@echo Programming device
 	$(XSDB) -eval "connect ; fpga -file $(BITSTREAM)"
-
