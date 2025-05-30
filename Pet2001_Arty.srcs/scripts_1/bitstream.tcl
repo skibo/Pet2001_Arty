@@ -1,5 +1,5 @@
 
-set project_name "Pet2001_Arty"
+set project_name "[lindex $::argv 0]"
 set origin_proj_dir [file normalize ./$project_name]
 
 open_project $origin_proj_dir/$project_name.xpr
