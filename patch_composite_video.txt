@@ -1,0 +1,147 @@
+diff --git a/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc b/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc
+index 3242193..48ccc9b 100644
+--- a/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc
++++ b/Pet2001_Arty.srcs/constrs_1/Pet2001_Arty.xdc
+@@ -57,24 +57,24 @@ set_property -dict { PACKAGE_PIN D9    IOSTANDARD LVCMOS33 } [get_ports { BTN }]
+ 
+ ##Pmod Header JA
+ 
+-set_property -dict { PACKAGE_PIN G13   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[0]}]; #IO_0_15 Sch=ja[1]
+-set_property -dict { PACKAGE_PIN B11   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[1]}]; #IO_L4P_T0_15 Sch=ja[2]
+-set_property -dict { PACKAGE_PIN A11   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[2]}]; #IO_L4N_T0_15 Sch=ja[3]
+-set_property -dict { PACKAGE_PIN D12   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[3]}]; #IO_L6P_T0_15 Sch=ja[4]
+-set_property -dict { PACKAGE_PIN D13   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[0]}]; #IO_L6N_T0_VREF_15 Sch=ja[7]
+-set_property -dict { PACKAGE_PIN B18   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[1]}]; #IO_L10P_T1_AD11P_15 Sch=ja[8]
+-set_property -dict { PACKAGE_PIN A18   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[2]}]; #IO_L10N_T1_AD11N_15 Sch=ja[9]
+-set_property -dict { PACKAGE_PIN K16   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[3]}]; #IO_25_15 Sch=ja[10]
++#set_property -dict { PACKAGE_PIN G13   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[0]}]; #IO_0_15 Sch=ja[1]
++#set_property -dict { PACKAGE_PIN B11   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[1]}]; #IO_L4P_T0_15 Sch=ja[2]
++#set_property -dict { PACKAGE_PIN A11   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[2]}]; #IO_L4N_T0_15 Sch=ja[3]
++#set_property -dict { PACKAGE_PIN D12   IOSTANDARD LVCMOS33 } [get_ports {VGA_R[3]}]; #IO_L6P_T0_15 Sch=ja[4]
++#set_property -dict { PACKAGE_PIN D13   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[0]}]; #IO_L6N_T0_VREF_15 Sch=ja[7]
++#set_property -dict { PACKAGE_PIN B18   IOSTANDARD LVCMOS33 } [get_ports {VGA_B[1]}]; #IO_L10P_T1_AD11P_15 Sch=ja[8]
++set_property -dict { PACKAGE_PIN A18   IOSTANDARD LVCMOS33 } [get_ports {VIDOUT[0]}]; #IO_L10N_T1_AD11N_15 Sch=ja[9]
++set_property -dict { PACKAGE_PIN K16   IOSTANDARD LVCMOS33 } [get_ports {VIDOUT[1]}]; #IO_25_15 Sch=ja[10]
+ 
+ ##Pmod Header JB
+ 
+-set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[0]}]; #IO_L11P_T1_SRCC_15 Sch=jb_p[1]
+-set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[1]}]; #IO_L11N_T1_SRCC_15 Sch=jb_n[1]
+-set_property -dict { PACKAGE_PIN D15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[2]}]; #IO_L12P_T1_MRCC_15 Sch=jb_p[2]
+-set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[3]}]; #IO_L12N_T1_MRCC_15 Sch=jb_n[2]
++#set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[0]}]; #IO_L11P_T1_SRCC_15 Sch=jb_p[1]
++#set_property -dict { PACKAGE_PIN E16   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[1]}]; #IO_L11N_T1_SRCC_15 Sch=jb_n[1]
++#set_property -dict { PACKAGE_PIN D15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[2]}]; #IO_L12P_T1_MRCC_15 Sch=jb_p[2]
++#set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {VGA_G[3]}]; #IO_L12N_T1_MRCC_15 Sch=jb_n[2]
+ 
+-set_property -dict { PACKAGE_PIN J17   IOSTANDARD LVCMOS33 } [get_ports {VGA_HSYNC}]; #IO_L23P_T3_FOE_B_15 Sch=jb_p[3]
+-set_property -dict { PACKAGE_PIN J18   IOSTANDARD LVCMOS33 } [get_ports {VGA_VSYNC}]; #IO_L23N_T3_FWE_B_15 Sch=jb_n[3]
++#set_property -dict { PACKAGE_PIN J17   IOSTANDARD LVCMOS33 } [get_ports {VGA_HSYNC}]; #IO_L23P_T3_FOE_B_15 Sch=jb_p[3]
++#set_property -dict { PACKAGE_PIN J18   IOSTANDARD LVCMOS33 } [get_ports {VGA_VSYNC}]; #IO_L23N_T3_FWE_B_15 Sch=jb_n[3]
+ #set_property -dict { PACKAGE_PIN K15   IOSTANDARD LVCMOS33 } [get_ports { jb[9] }]; #IO_L24P_T3_RS1_15 Sch=jb_p[4]
+ #set_property -dict { PACKAGE_PIN J15   IOSTANDARD LVCMOS33 } [get_ports { jb[10] }]; #IO_L24N_T3_RS0_15 Sch=jb_n[4]
+ 
+diff --git a/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v b/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v
+index 231d8ec..04167c7 100644
+--- a/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v
++++ b/Pet2001_Arty.srcs/source_1/Pet2001_Arty.v
+@@ -14,11 +14,8 @@
+ //      SW[1] -         PET turbo mode
+ //      SW[0] -         PET suspend
+ //      LED -           PET diagnostic LED.
+-//      VGA_R[3:0] -    PMOD connections to JA and JB on Arty.  The constraints
+-//      VGA_G[3:0] -    file assigns these signals to the proper pins so as to
+-//      VGA_B[3:0] -    interface to Digilent's PmodVGA PMOD board.
+-//      VGA_HSYNC -
+-//      VGA_VSYNC -
++//      VIDOUT[1] -	Composite video out (video data)
++//      VIDOUT[0] -	Composite video out (sync)
+ //      AUDIO -         CB2 audio connected to JC[1].
+ //      CASS_WR -       Cassette write output connected to JC[3].
+ //      CASS_RD -       Cassette read input connected to JC[4].
+@@ -62,11 +59,7 @@ module Pet2001_Arty(
+             output       CASS_WR,
+             input        CASS_RD,
+ 
+-            output [3:0] VGA_R,
+-            output [3:0] VGA_G,
+-            output [3:0] VGA_B,
+-            output       VGA_HSYNC,
+-            output       VGA_VSYNC,
++	    output [1:0] VIDOUT,
+ 
+             input        PS2_CLK,
+             input        PS2_DATA,
+@@ -164,11 +157,7 @@ module Pet2001_Arty(
+ 
+     pet2001_top
+         pet_top(
+-                .vga_r(VGA_R),
+-                .vga_g(VGA_G),
+-                .vga_b(VGA_B),
+-                .vga_hsync(VGA_HSYNC),
+-                .vga_vsync(VGA_VSYNC),
++                .vidout(VIDOUT),
+ 
+                 .keyrow(keyrow),
+                 .keyin(keyin),
+diff --git a/Pet2001_Arty.srcs/source_1/pet2001_top.v b/Pet2001_Arty.srcs/source_1/pet2001_top.v
+index 327d469..6bb3670 100644
+--- a/Pet2001_Arty.srcs/source_1/pet2001_top.v
++++ b/Pet2001_Arty.srcs/source_1/pet2001_top.v
+@@ -41,11 +41,7 @@
+ //////////////////////////////////////////////////////////////////////////////
+ 
+ module pet2001_top(
+-                   output [3:0] vga_r,          // Video
+-                   output [3:0] vga_g,
+-                   output [3:0] vga_b,
+-                   output       vga_hsync,
+-                   output       vga_vsync,
++                   output [1:0] vidout,         // Composite Video
+ 
+                    output [3:0] keyrow,         // Keyboard
+                    input [7:0]  keyin,
+@@ -120,11 +116,7 @@ module pet2001_top(
+                  .nmi(nmi),
+                  .irq(irq),
+ 
+-                 .vga_r(vga_r),
+-                 .vga_g(vga_g),
+-                 .vga_b(vga_b),
+-                 .vga_hsync(vga_hsync),
+-                 .vga_vsync(vga_vsync),
++                 .vidout(vidout),
+ 
+                  .keyin(keyin),
+                  .keyrow(keyrow),
+diff --git a/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v b/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v
+index 1a11ef0..968f43c 100644
+--- a/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v
++++ b/Pet2001_Arty.srcs/source_1/pet2001hw/pet2001hw.v
+@@ -48,11 +48,7 @@ module pet2001hw #(parameter CLKDIV = 50)
+      output           nmi,
+      output           irq,
+ 
+-     output [3:0]     vga_r,            // VGA video
+-     output [3:0]     vga_g,
+-     output [3:0]     vga_b,
+-     output           vga_hsync,
+-     output           vga_vsync,
++     output [1:0]     vidout,           // Composite video
+ 
+      output [3:0]     keyrow,           // Keyboard
+      input [7:0]      keyin,
+@@ -177,11 +173,7 @@ module pet2001hw #(parameter CLKDIV = 50)
+     wire        video_blank;    // blank screen during scrolling
+     wire        video_gfx;      // display graphic characters vs. lower-case
+ 
+-    pet2001vga  vid(.vga_r(vga_r),
+-                    .vga_g(vga_g),
+-                    .vga_b(vga_b),
+-                    .vga_hsync(vga_hsync),
+-                    .vga_vsync(vga_vsync),
++    pet2001ntsc vid(.vidout(vidout),
+ 
+                     .video_addr(video_addr),
+                     .video_data(video_data),
