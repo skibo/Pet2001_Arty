@@ -145,3 +145,33 @@ index 1a11ef0..968f43c 100644
  
                      .video_addr(video_addr),
                      .video_data(video_data),
+diff --git a/Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v b/Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v
+index 52a27a2..2b1304b 100644
+--- a/Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v
++++ b/Pet2001_Arty.srcs/sim_1/test_Pet2001_Arty.v
+@@ -8,11 +8,7 @@ module test_Pet2001_Arty;
+ 
+     reg [2:0]  SW;
+     reg        BTN;
+-    wire [3:0] VGA_R;
+-    wire [3:0] VGA_G;
+-    wire [3:0] VGA_B;
+-    wire       VGA_HSYNC;
+-    wire       VGA_VSYNC;
++    wire [1:0] VIDOUT;
+     wire       AUDIO;
+     wire       CASS_WR;
+     reg        CASS_RD;
+@@ -39,11 +35,7 @@ module test_Pet2001_Arty;
+                      .AUDIO(AUDIO),
+                      .CASS_WR(CASS_WR),
+                      .CASS_RD(CASS_RD),
+-                     .VGA_R(VGA_R),
+-                     .VGA_G(VGA_G),
+-                     .VGA_B(VGA_B),
+-                     .VGA_HSYNC(VGA_HSYNC),
+-                     .VGA_VSYNC(VGA_VSYNC),
++                     .VIDOUT(VIDOUT),
+                      .PS2_CLK(PS2_CLK),
+                      .PS2_DATA(PS2_DATA),
+                      .CLK(CLK100)
